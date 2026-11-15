@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Cloud.io - 30 Levels Sky Arena</title>
+<style>
+:root{--primary:#38bdf8;--bg-glass:rgba(15,23,42,.82);--border-glass:rgba(255,255,255,.2);--text:#f8fafc}
+*{box-sizing:border-box;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;margin:0;padding:0;font-family:'Segoe UI',Roboto,Arial,sans-serif}
+html,body{width:100%;height:100%;overflow:hidden;background:#0f172a;color:var(--text);touch-action:none}
+#gameCanvas{display:block;width:100%;height:100%;position:fixed;top:0;left:0;z-index:1}
+.hidden{display:none!important}
+.btn{border:none;outline:none;cursor:pointer;border-radius:12px;font-weight:700;color:#fff;padding:10px 16px;transition:transform .1s;display:inline-flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 12px rgba(0,0,0,.28)}
+.btn:active{transform:scale(.95)}
+.btn-primary{background:linear-gradient(135deg,#38bdf8,#2563eb)}
+.btn-gold{background:linear-gradient(135deg,#fbbf24,#d97706);color:#1e293b}
+.btn-purple{background:linear-gradient(135deg,#a855f7,#6366f1)}
+.btn-glass{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25)}
+.btn-danger{background:linear-gradient(135deg,#f87171,#dc2626)}
+#lobbyScreen{position:fixed;top:0;left:0;right:0;bottom:0;z-index:20;display:flex;flex-direction:column;justify-content:space-between;padding:10px 16px;background:radial-gradient(circle at 50% 35%,rgba(56,189,248,.22),rgba(15,23,42,.85));overflow-y:auto}
+.lobby-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.brand-badge,.gold-pill{display:flex;align-items:center;gap:7px;background:var(--bg-glass);padding:6px 13px;border-radius:999px;border:1px solid var(--border-glass);font-size:.86rem}
+.gold-pill{border-color:rgba(251,191,36,.5);font-weight:800;color:#fde047}
+.lobby-top-actions{display:flex;align-items:center;gap:8px}
+.lobby-center{display:flex;align-items:center;justify-content:center;gap:18px;flex:1;max-width:1020px;width:100%;margin:8px auto}
+.lobby-card{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:18px;padding:16px 20px;box-shadow:0 16px 36px rgba(0,0,0,.4)}
+.main-play-card{width:390px;max-width:100%;text-align:center}
+.game-title{font-size:2.2rem;font-weight:900;color:#7dd3fc;text-shadow:0 4px 14px rgba(56,189,248,.5);margin-bottom:2px}
+.game-subtitle{font-size:.82rem;color:#cbd5e1;margin-bottom:10px}
+.input-group{margin-bottom:10px;text-align:left}
+.input-group label{display:block;font-size:.74rem;color:#94a3b8;margin-bottom:4px;font-weight:700}
+.input-group input{width:100%;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(15,23,42,.82);color:#fff;font-size:.94rem;font-weight:600;outline:none}
+.mode-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.mode-btn{padding:9px 6px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#cbd5e1;font-weight:700;font-size:.84rem;cursor:pointer}
+.mode-btn.active{background:rgba(56,189,248,.28);border-color:#38bdf8;color:#fff}
+.play-btn-big{width:100%;padding:12px;font-size:1.05rem;border-radius:12px;margin-bottom:9px}
+.secondary-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.guide-card{width:310px;font-size:.8rem;line-height:1.42;color:#e2e8f0}
+.guide-card h3{color:#7dd3fc;margin-bottom:8px;font-size:.95rem}
+.guide-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.guide-list li{background:rgba(255,255,255,.06);padding:6px 9px;border-radius:8px;border-left:3px solid var(--primary)}
+@media(max-width:820px){.guide-card{display:none}}
+@media(max-height:440px){.game-title{font-size:1.65rem}.game-subtitle{display:none}.lobby-card{padding:10px 14px}.play-btn-big{padding:9px}}
+.modal-backdrop{position:fixed;top:0;left:0;right:0;bottom:0;z-index:50;background:rgba(2,6,23,.84);display:flex;align-items:center;justify-content:center;padding:12px}
+.modal-box{background:#0f172a;border:1px solid rgba(255,255,255,.2);border-radius:16px;width:760px;max-width:96%;max-height:90%;display:flex;flex-direction:column;overflow:hidden}
+.modal-header{padding:10px 16px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;align-items:center}
+.modal-body{padding:14px 16px;overflow-y:auto;flex:1}
+.shop-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+@media(max-width:520px){.shop-tabs{grid-template-columns:repeat(2,1fr)}}
+.shop-tab{padding:8px 4px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid transparent;color:#cbd5e1;font-weight:700;font-size:.78rem;cursor:pointer}
+.shop-tab.active{background:rgba(56,189,248,.25);border-color:var(--primary);color:#fff}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:9px}
+.skin-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:9px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+.skin-item.equipped{border-color:#22c55e;background:rgba(34,197,94,.14)}
+.skin-preview{width:64px;height:44px;border-radius:10px;border:2px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
+.skin-name{font-weight:700;font-size:.8rem}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08);gap:12px}
+.setting-select{background:#1e293b;color:#fff;border:1px solid rgba(255,255,255,.22);padding:7px 10px;border-radius:8px;font-weight:600}
+#hudLayer{position:fixed;top:0;left:0;right:0;bottom:0;z-index:10;pointer-events:none}
+.hud-panel{background:rgba(15,23,42,.46);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:5px 9px}
+.hud-top-left{position:absolute;top:6px;left:6px}
+.level-bar-wrap{width:170px}
+.level-row{display:flex;justify-content:space-between;font-size:.72rem;font-weight:700;margin-bottom:3px}
+.xp-track{width:100%;height:6px;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden}
+.xp-fill{height:100%;width:0%;background:linear-gradient(90deg,#38bdf8,#fde047)}
+.hud-top-center{position:absolute;top:6px;left:50%;transform:translateX(-50%)}
+.top-status-pill{display:inline-flex;align-items:center;gap:7px;background:rgba(15,23,42,.5);border:1px solid rgba(255,255,255,.15);padding:3px 12px;border-radius:999px;white-space:nowrap}
+.timer-box{font-size:.85rem;font-weight:800}
+.weather-badge{font-size:.7rem;font-weight:700;color:#bae6fd}
+.hud-top-right{position:absolute;top:6px;right:6px;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.top-right-bar{display:flex;align-items:flex-start;gap:5px}
+.hud-exit-btn{pointer-events:auto;width:26px;height:26px;padding:0;font-size:.72rem;border-radius:7px;opacity:.82}
+#minimapCanvas{border-radius:8px;border:1px solid rgba(255,255,255,.24);background:rgba(15,23,42,.45);display:block}
+.leaderboard{width:136px;font-size:.67rem;padding:4px 6px;border-radius:8px}
+.lb-title{font-weight:800;color:#fbbf24;margin-bottom:2px;font-size:.67rem}
+.lb-row{display:flex;justify-content:space-between;padding:1px 3px;border-radius:3px;line-height:1.25;white-space:nowrap;overflow:hidden}
+.lb-row span:first-child{overflow:hidden;text-overflow:ellipsis;max-width:94px}
+.lb-row.me{background:rgba(56,189,248,.34);font-weight:800}
+#killFeed{position:absolute;top:34px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px}
+.kill-msg{background:rgba(15,23,42,.56);padding:2px 10px;border-radius:999px;font-size:.68rem;font-weight:700;white-space:nowrap}
+#joystickZone{position:absolute;bottom:10px;left:10px;width:114px;height:114px;pointer-events:auto;touch-action:none;opacity:.72}
+.joystick-ring{width:100px;height:100px;border-radius:50%;border:2px solid rgba(255,255,255,.38);background:rgba(15,23,42,.32);position:relative;margin:7px}
+.joystick-knob{width:40px;height:40px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff,#38bdf8);border:2px solid rgba(255,255,255,.85);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
+#dashBtn{position:absolute;bottom:14px;right:14px;width:64px;height:64px;border-radius:50%;pointer-events:auto;border:2px solid rgba(255,255,255,.45);background:rgba(37,99,235,.65);color:#fff;font-weight:800;font-size:.72rem;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
+#dashBtn.cooldown{opacity:.4}
+.podium-wrap{display:flex;justify-content:center;align-items:flex-end;gap:12px;margin:14px 0}
+.podium-col{flex:1;max-width:165px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:10px 8px;text-align:center}
+.podium-1{border-color:#fbbf24;background:rgba(251,191,36,.16);transform:translateY(-8px)}
+.podium-rank{font-size:1.4rem;font-weight:900}
+.podium-name{font-weight:800;margin:4px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.podium-score{font-size:.8rem;color:#94a3b8}
+@media(max-width:760px){.level-bar-wrap{width:128px}.level-row{font-size:.63rem}#minimapCanvas{width:56px;height:56px}.leaderboard{width:112px;font-size:.6rem;padding:3px 5px}.lb-row span:first-child{max-width:74px}.top-status-pill{padding:2px 8px;gap:5px}.timer-box{font-size:.74rem}.weather-badge{font-size:.6rem}#joystickZone{width:96px;height:96px;left:6px;bottom:6px}.joystick-ring{width:84px;height:84px;margin:6px}.joystick-knob{width:34px;height:34px}#dashBtn{width:54px;height:54px;right:10px;bottom:10px;font-size:.65rem}}
+</style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="lobbyScreen">
+    <div class="lobby-top">
+      <div class="brand-badge"><span>☁️</span><strong>CLOUD.IO</strong><span style="font-size:.74rem;color:#7dd3fc">30 Tiers</span></div>
+      <div class="lobby-top-actions">
+        <div class="gold-pill"><span>🪙</span><span id="lobbyGold">150</span></div>
+        <button class="btn btn-glass" id="btnOpenSettings">⚙️ <span data-i18n="settings">Cài đặt</span></button>
+      </div>
+    </div>
+    <div class="lobby-center">
+      <div class="lobby-card main-play-card">
+        <div class="game-title">Cloud.io</div>
+        <div class="game-subtitle" data-i18n="subtitle">Hấp thụ gió, mưa, sét & lốc xoáy — Tiến hóa 30 cấp độ bão tố!</div>
+        <div class="input-group">
+          <label data-i18n="nickname">Tên đám mây của bạn</label>
+          <input type="text" id="playerNameInput" maxlength="14" value="StormCloud" />
+        </div>
+        <div class="mode-switch">
+          <button class="mode-btn active" id="modeOfflineBtn">🤖 <span data-i18n="offlineMode">Đấu Offline</span></button>
+          <button class="mode-btn" id="modeOnlineBtn">🌐 <span data-i18n="onlineMode">Đấu Online</span></button>
+        </div>
+        <button class="btn btn-primary play-btn-big" id="btnPlay">⚡ <span data-i18n="playNow">VÀO TRẬN</span></button>
+        <div class="secondary-btns">
+          <button class="btn btn-gold" id="btnOpenShop">🎨 <span data-i18n="shop">Cửa hàng</span></button>
+          <button class="btn btn-purple" id="btnOpenLevels">🌩️ <span data-i18n="cloudDex">30 Cấp Độ Mây</span></button>
+        </div>
+      </div>
+      <div class="lobby-card guide-card">
+        <h3>🌪️ <span data-i18n="howToPlay">Luật chơi</span></h3>
+        <ul class="guide-list">
+          <li data-i18n="tip1">🕹️ Kéo vòng tròn điều khiển, chạm giữ màn hình hoặc dùng WASD.</li>
+          <li data-i18n="tip2">🌬️ Ăn Gió, Mưa, Sét, Lốc xoáy để tăng cấp tối đa Lv.30.</li>
+          <li data-i18n="tip3">⚡ Va chạm mây cấp thấp hơn để nuốt chửng & cướp năng lượng!</li>
+          <li data-i18n="tip4">🎵 Nhạc mở đầu vui tươi, càng về cuối càng giông tố kịch tính!</li>
+        </ul>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:.76rem;color:#94a3b8"><span id="onlineNotice"></span></div>
+  </div>
+
+  <div id="hudLayer" class="hidden">
+    <div class="hud-top-left">
+      <div class="hud-panel level-bar-wrap">
+        <div class="level-row"><span id="hudLevelText">Lv.1 Mây Tơ</span><span id="hudScoreText">0 XP</span></div>
+        <div class="xp-track"><div class="xp-fill" id="hudXpFill"></div></div>
+      </div>
+    </div>
+    <div class="hud-top-center">
+      <div class="top-status-pill"><span class="timer-box" id="hudTimer">03:00</span><span style="opacity:.4">|</span><span class="weather-badge" id="hudWeather">☀️ Trời Trong Lành</span></div>
+    </div>
+    <div id="killFeed"></div>
+    <div class="hud-top-right">
+      <div class="top-right-bar">
+        <button class="btn btn-danger hud-exit-btn" id="btnLeaveMatch">✕</button>
+        <canvas id="minimapCanvas" width="76" height="76"></canvas>
+      </div>
+      <div class="hud-panel leaderboard">
+        <div class="lb-title">🏆 <span data-i18n="topClouds">BXH</span></div>
+        <div id="leaderboardList"></div>
+      </div>
+    </div>
+    <div id="joystickZone"><div class="joystick-ring" id="joystickRing"><div class="joystick-knob" id="joystickKnob"></div></div></div>
+    <button id="dashBtn"><span>⚡</span><span data-i18n="dash">LƯỚT</span></button>
+  </div>
+
+  <div id="shopModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>🎨 <span data-i18n="shopTitle">Cửa Hàng</span></h3>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="gold-pill" style="padding:4px 10px;font-size:.86rem">🪙 <span id="shopGold">150</span></div>
+          <button class="btn btn-glass" id="btnCloseShop">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="shop-tabs">
+          <button class="shop-tab active" id="tabCloudSkins" data-i18n="cloudSkins">Skin Mây</button>
+          <button class="shop-tab" id="tabSkySkins" data-i18n="skySkins">Map Bầu Trời</button>
+          <button class="shop-tab" id="tabEffectSkins" data-i18n="effectSkins">Hiệu Ứng Mây</button>
+          <button class="shop-tab" id="tabFaceSkins" data-i18n="faceSkins">Biểu Cảm</button>
+        </div>
+        <div class="shop-grid" id="shopGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="modal-backdrop hidden">
+    <div class="modal-box" style="width:450px">
+      <div class="modal-header"><h3>⚙️ <span data-i18n="settings">Cài Đặt</span></h3><button class="btn btn-glass" id="btnCloseSettings">✕</button></div>
+      <div class="modal-body">
+        <div class="setting-row"><span data-i18n="language">Ngôn ngữ</span><select id="selLanguage" class="setting-select"><option value="vi">Tiếng Việt</option><option value="en">English</option><option value="ko">한국어</option><option value="zh">中文</option><option value="ja">日本語</option></select></div>
+        <div class="setting-row"><span data-i18n="sfxVol">Âm lượng Hiệu ứng</span><input type="range" id="rangeSfx" min="0" max="100" value="75" /></div>
+        <div class="setting-row"><span data-i18n="bgmVol">Âm lượng Nhạc nền</span><input type="range" id="rangeBgm" min="0" max="100" value="55" /></div>
+        <div class="setting-row"><span data-i18n="graphics">Chất lượng Đồ họa</span><select id="selQuality" class="setting-select"><option value="low" data-i18n="qLow">Thấp</option><option value="med" selected data-i18n="qMed">Trung bình</option><option value="high" data-i18n="qHigh">Cao</option></select></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="levelsModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header"><h3>🌩️ <span data-i18n="cloudDex">30 Cấp Độ Mây</span></h3><button class="btn btn-glass" id="btnCloseLevels">✕</button></div>
+      <div class="modal-body"><div class="shop-grid" id="levelsGrid"></div></div>
+    </div>
+  </div>
+
+  <div id="resultModal" class="modal-backdrop hidden">
+    <div class="modal-box" style="width:550px;text-align:center">
+      <div class="modal-header"><h3>🏆 <span data-i18n="matchOver">KẾT THÚC TRẬN ĐẤU</span></h3><span></span></div>
+      <div class="modal-body">
+        <div class="podium-wrap" id="podiumWrap"></div>
+        <div class="hud-panel" style="display:inline-flex;gap:18px;margin:8px auto 16px;padding:10px 20px">
+          <div><div style="font-size:.74rem;color:#94a3b8" data-i18n="yourRank">Hạng của bạn</div><div id="resMyRank" style="font-size:1.25rem;font-weight:900">#1</div></div>
+          <div><div style="font-size:.74rem;color:#94a3b8" data-i18n="maxLevel">Cấp đạt được</div><div id="resMyLevel" style="font-size:1.25rem;font-weight:900">Lv.1</div></div>
+          <div><div style="font-size:.74rem;color:#94a3b8" data-i18n="goldEarned">Vàng nhận được</div><div id="resGoldEarned" style="font-size:1.25rem;font-weight:900;color:#fde047">+100 🪙</div></div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button class="btn btn-primary" id="btnPlayAgain">🔄 <span data-i18n="playAgain">Chơi lại</span></button>
+          <button class="btn btn-glass" id="btnBackLobby">🏠 <span data-i18n="backLobby">Về sảnh</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+<script>
+(function () {
+  'use strict';
+  var I18N = {
+    vi: {settings:'Cài đặt',subtitle:'Hấp thụ gió, mưa, sét & lốc xoáy — Tiến hóa 30 cấp độ bão tố!',nickname:'Tên đám mây của bạn',offlineMode:'Đấu Offline',onlineMode:'Đấu Online',playNow:'VÀO TRẬN',shop:'Cửa hàng',cloudDex:'30 Cấp Độ Mây',howToPlay:'Luật chơi',tip1:'🕹️ Kéo vòng tròn điều khiển, chạm giữ màn hình hoặc dùng WASD.',tip2:'🌬️ Ăn Gió, Mưa, Sét, Lốc xoáy để tăng cấp tối đa Lv.30.',tip3:'⚡ Va chạm mây cấp thấp hơn để nuốt chửng & cướp năng lượng!',tip4:'🎵 Nhạc mở đầu vui tươi, càng về cuối càng giông tố kịch tính!',topClouds:'BXH',dash:'LƯỚT',shopTitle:'Cửa Hàng',cloudSkins:'Skin Mây',skySkins:'Map Bầu Trời',effectSkins:'Hiệu Ứng Mây',faceSkins:'Biểu Cảm',language:'Ngôn ngữ',sfxVol:'Âm lượng Hiệu ứng',bgmVol:'Âm lượng Nhạc nền',graphics:'Chất lượng Đồ họa',qLow:'Thấp',qMed:'Trung bình',qHigh:'Cao',matchOver:'KẾT THÚC TRẬN ĐẤU',yourRank:'Hạng của bạn',maxLevel:'Cấp đạt được',goldEarned:'Vàng nhận được',playAgain:'Chơi lại',backLobby:'Về sảnh',buy:'Mua',equip:'Trang bị',equipped:'Đang dùng',notEnoughGold:'Chưa đủ vàng!',onlineHint:'🌐 Đấu Online: Ghép trận nhanh với người chơi ngẫu nhiên.',offlineHint:'🤖 Đấu Offline: Chiến đấu trên bầu trời cùng nhiều mây NPC.',w0:'☀️ Trời Trong Lành',w1:'🌬️ Gió Nổi Mạnh',w2:'🌧️ Mưa Giông',w3:'⚡ Sấm Sét',w4:'🌪️ Siêu Bão',absorbedMsg:'{a} đã nuốt {b}!',levelUpMsg:'⬆️ LÊN CẤP {lv}!'},
+    en: {settings:'Settings',subtitle:'Eat wind, rain, lightning & tornadoes — Evolve across 30 storm levels!',nickname:'Your Cloud Name',offlineMode:'Offline Mode',onlineMode:'Online Mode',playNow:'PLAY MATCH',shop:'Shop',cloudDex:'30 Cloud Levels',howToPlay:'How to Play',tip1:'🕹️ Drag joystick, hold screen/mouse, or use WASD.',tip2:'🌬️ Eat Wind, Rain, Lightning & Tornadoes up to Lv.30.',tip3:'⚡ Crash into weaker clouds to steal their energy!',tip4:'🎵 Cheerful music turns dramatic as the sky storms!',topClouds:'Top',dash:'DASH',shopTitle:'Cloud Shop',cloudSkins:'Cloud Skins',skySkins:'Sky Maps',effectSkins:'Cloud Effects',faceSkins:'Expressions',language:'Language',sfxVol:'SFX Volume',bgmVol:'Music Volume',graphics:'Graphics Quality',qLow:'Low',qMed:'Medium',qHigh:'High',matchOver:'MATCH FINISHED',yourRank:'Your Rank',maxLevel:'Level Reached',goldEarned:'Gold Earned',playAgain:'Play Again',backLobby:'Lobby',buy:'Buy',equip:'Equip',equipped:'Equipped',notEnoughGold:'Not enough gold!',onlineHint:'🌐 Online Mode: Quick match against random players.',offlineHint:'🤖 Offline Mode: Battle packed with NPC clouds.',w0:'☀️ Clear Sky',w1:'🌬️ Rising Winds',w2:'🌧️ Rainstorm',w3:'⚡ Thunderstorm',w4:'🌪️ Supercell',absorbedMsg:'{a} absorbed {b}!',levelUpMsg:'⬆️ LEVEL {lv}!'},
+    ko: {settings:'설정',subtitle:'바람, 비, 번개, 토네이도를 흡수해 30단계 구름으로 진화하세요!',nickname:'구름 이름',offlineMode:'오프라인',onlineMode:'온라인',playNow:'게임 시작',shop:'상점',cloudDex:'30단계 구름',howToPlay:'게임 방법',tip1:'🕹️ 조이스틱, 화면 드래그 또는 WASD로 비행하세요.',tip2:'🌬️ 바람, 비, 번개, 회오리를 먹어 Lv.30까지 성장!',tip3:'⚡ 낮은 레벨의 구름과 부딪혀 에너지를 흡수하세요!',tip4:'🎵 밝은 음악이 폭풍과 함께 긴박하게 변합니다!',topClouds:'순위',dash:'대시',shopTitle:'상점',cloudSkins:'구름 스킨',skySkins:'하늘 맵',effectSkins:'구름 효과',faceSkins:'표정',language:'언어',sfxVol:'효과음',bgmVol:'배경음악',graphics:'그래픽 품질',qLow:'낮음',qMed:'보통',qHigh:'높음',matchOver:'경기 종료',yourRank:'내 순위',maxLevel:'달성 레벨',goldEarned:'획득 골드',playAgain:'다시 하기',backLobby:'로비로',buy:'구매',equip:'장착',equipped:'장착중',notEnoughGold:'골드가 부족합니다!',onlineHint:'🌐 온라인: 랜덤 플레이어와 빠른 매칭.',offlineHint:'🤖 오프라인: 많은 NPC 구름과 대결.',w0:'☀️ 맑은 하늘',w1:'🌬️ 강풍',w2:'🌧️ 폭우',w3:'⚡ 뇌우',w4:'🌪️ 슈퍼셀',absorbedMsg:'{a} → {b} 흡수!',levelUpMsg:'⬆️ 레벨 {lv}!'},
+    zh: {settings:'设置',subtitle:'吞噬风、雨、闪电和龙卷风 — 进化30级超级风暴云！',nickname:'你的云朵名称',offlineMode:'离线模式',onlineMode:'在线模式',playNow:'开始战斗',shop:'商店',cloudDex:'30级云朵',howToPlay:'玩法说明',tip1:'🕹️ 拖动摇杆、按住屏幕或使用WASD控制飞行。',tip2:'🌬️ 吞食风、雨、闪电、龙卷风升至30级。',tip3:'⚡ 撞击更低等级的云朵即可吞噬它的能量！',tip4:'🎵 开局欢快音乐，随着风暴升级变得紧张刺激！',topClouds:'排行',dash:'冲刺',shopTitle:'云朵商店',cloudSkins:'云朵皮肤',skySkins:'天空地图',effectSkins:'云朵特效',faceSkins:'表情',language:'语言',sfxVol:'音效音量',bgmVol:'音乐音量',graphics:'画质设置',qLow:'低',qMed:'中',qHigh:'高',matchOver:'比赛结束',yourRank:'你的排名',maxLevel:'达到等级',goldEarned:'获得金币',playAgain:'再来一局',backLobby:'返回大厅',buy:'购买',equip:'装备',equipped:'使用中',notEnoughGold:'金币不足！',onlineHint:'🌐 在线模式：快速匹配随机玩家。',offlineHint:'🤖 离线模式：与大量NPC云朵对战。',w0:'☀️ 晴朗',w1:'🌬️ 强风',w2:'🌧️ 暴雨',w3:'⚡ 雷电',w4:'🌪️ 飓风',absorbedMsg:'{a} 吞噬了 {b}！',levelUpMsg:'⬆️ 升至 {lv} 级！'},
+    ja: {settings:'設定',subtitle:'風・雨・雷・竜巻を吸収して30段階の嵐雲へ進化しよう！',nickname:'クラウド名',offlineMode:'オフライン',onlineMode:'オンライン',playNow:'バトル開始',shop:'ショップ',cloudDex:'30段階の雲',howToPlay:'遊び方',tip1:'🕹️ ジョイスティック、画面長押し、またはWASDで操作。',tip2:'🌬️ 風・雨・雷・竜巻を食べて最大Lv.30へ成長。',tip3:'⚡ 自分より低レベルの雲にぶつかってエネルギーを奪おう！',tip4:'🎵 序盤は明るい音楽、嵐が迫ると迫力あるBGMに変化！',topClouds:'順位',dash:'ダッシュ',shopTitle:'ショップ',cloudSkins:'雲スキン',skySkins:'空マップ',effectSkins:'雲エフェクト',faceSkins:'表情',language:'言語',sfxVol:'効果音',bgmVol:'BGM音量',graphics:'画質設定',qLow:'低',qMed:'中',qHigh:'高',matchOver:'マッチ終了',yourRank:'順位',maxLevel:'到達レベル',goldEarned:'獲得ゴールド',playAgain:'もう一度',backLobby:'ロビーへ',buy:'購入',equip:'装備',equipped:'装備中',notEnoughGold:'ゴールドが足りません！',onlineHint:'🌐 オンライン：ランダムプレイヤーと対戦。',offlineHint:'🤖 オフライン：多数のNPC雲とバトル。',w0:'☀️ 快晴',w1:'🌬️ 強風',w2:'🌧️ 豪雨',w3:'⚡ 雷嵐',w4:'🌪️ スーパーセル',absorbedMsg:'{a} → {b} 吸収！',levelUpMsg:'⬆️ レベル {lv}！'}
+  };
+
+  var LEVEL_PRESETS = [
+    ['Mây Tơ','Wispy Puff','#ffffff','#e2e8f0'],['Mây Bông','Cotton Puff','#ffffff','#cbd5e1'],
+    ['Mây Sương','Dewy Mist','#f0f9ff','#bae6fd'],['Mây Gió Nhẹ','Soft Breeze','#e0f2fe','#93c5fd'],
+    ['Mây Gió Cuốn','Wind Rider','#cffafe','#67e8f9'],['Mây Mưa Phùn','Drizzle Cloud','#bae6fd','#60a5fa'],
+    ['Mây Mưa Rào','Rainmaker','#93c5fd','#3b82f6'],['Mây U Ám','Overcast','#94a3b8','#475569'],
+    ['Mây Giông Nhỏ','Squall Puff','#64748b','#334155'],['Mây Sấm Sơ Khai','Static Spark','#818cf8','#3730a3'],
+    ['Mây Sét Vàng','Thunderhead','#475569','#1e293b'],['Mây Cuồng Phong','Gale Storm','#38bdf8','#1e3a8a'],
+    ['Lõi Lốc Xoáy','Cyclone Core','#2dd4bf','#115e59'],['Bão Tím Điện Từ','Volt Tempest','#a855f7','#3b0764'],
+    ['Siêu Bão Đỏ','Crimson Cell','#fb7185','#881337'],['Mây Nham Thạch','Magma Cloud','#f97316','#7c2d12'],
+    ['Cực Quang Lục','Jade Aurora','#34d399','#064e3b'],['Bão Băng Giá','Glacier Storm','#e0f2fe','#0284c7'],
+    ['Hào Quang Vàng','Solar Flare','#fde047','#ca8a04'],['Mây Huyết Nguyệt','Blood Moon','#ef4444','#450a0a'],
+    ['Tinh Vân Tím','Nebula Drift','#e879f9','#4c1d95'],['Mây Hư Không','Void Abyss','#9333ea','#09090b'],
+    ['Lôi Thần Lam','Azure Raijin','#06b6d4','#083344'],['Phượng Hoàng Lửa','Phoenix Ash','#fb923c','#991b1b'],
+    ['Thiên Hà Bạc','Astral Silver','#f8fafc','#64748b'],['Bão Lượng Tử','Quantum Gale','#22d3ee','#701a75'],
+    ['Thần Rồng Bão','Storm Dragon','#facc15','#15803d'],['Nhật Thực Tối Cao','Solar Eclipse','#fef08a','#18181b'],
+    ['Thiên Lôi Chí Tôn','Celestial God','#ffffff','#f59e0b'],['Thần Bão Omega','Omega Storm','#f472b6','#0f172a']
+  ];
+  var CLOUD_LEVELS = LEVEL_PRESETS.map(function (p, li) {
+    return { lv: li + 1, xp: li === 0 ? 0 : Math.floor(32 * Math.pow(li, 1.78)), r: Math.round(20 + li * 3.4), vi: p[0], en: p[1], c1: p[2], c2: p[3] };
+  });
+
+  function tierPrice(idx, maxPrice) {
+    if (idx === 0) return 0;
+    return Math.round((140 + Math.pow(idx / 29, 2.2) * (maxPrice - 140)) / 10) * 10;
+  }
+
+  var CLOUD_SKINS = [
+    ['Classic White','☁️',null,'rgba(255,255,255,.75)','none'],['Mint Cream','🌿',['#d1fae5','#34d399'],'#a7f3d0','none'],
+    ['Peach Puff','🍑',['#ffedd5','#fb923c'],'#fed7aa','none'],['Sky Bubble','🫧',['#e0f2fe','#38bdf8'],'#bae6fd','dots'],
+    ['Lavender Mist','🪻',['#f3e8ff','#a855f7'],'#e9d5ff','none'],['Sakura Dream','🌸',['#ffe4e6','#f472b6'],'#fbcfe8','dots'],
+    ['Lemon Fizz','🍋',['#fef9c3','#eab308'],'#fef08a','stripes'],['Ocean Breeze','🌊',['#cffafe','#0284c7'],'#a5f3fc','stripes'],
+    ['Cotton Candy','🍭',['#fbcfe8','#60a5fa'],'#f9a8d4','none'],['Matcha Latte','🍵',['#ecfccb','#65a30d'],'#d9f99d','none'],
+    ['Berry Storm','🫐',['#e0e7ff','#4f46e5'],'#c7d2fe','dots'],['Sunset Coral','🪸',['#ffe4e6','#e11d48'],'#fda4af','stripes'],
+    ['Frost Crystal','❄️',['#ecfeff','#06b6d4'],'#cffafe','crystal'],['Toxic Slime','🧪',['#d9f99d','#16a34a'],'#bef264','dots'],
+    ['Honeycomb','🍯',['#fef3c7','#d97706'],'#fde68a','stripes'],['Cyber Neon','💠',['#22d3ee','#9333ea'],'#67e8f9','neon'],
+    ['Crimson Demon','😈',['#f43f5e','#450a0a'],'#fda4af','neon'],['Obsidian Core','🖤',['#52525b','#09090b'],'#a1a1aa','crystal'],
+    ['Emerald Jade','🐉',['#6ee7b7','#065f46'],'#a7f3d0','stripes'],['Solar Magma','🌋',['#fde047','#b91c1c'],'#fb923c','crystal'],
+    ['Starlight','✨',['#e0e7ff','#1e1b4b'],'#a5b4fc','dots'],['Imperial Gold','👑',['#fef08a','#b45309'],'#fde047','neon'],
+    ['Plasma Pulse','⚡',['#67e8f9','#1d4ed8'],'#ffffff','neon'],['Galaxy Void','🌌',['#c084fc','#09090b'],'#e879f9','dots'],
+    ['Blood Vampire','🩸',['#dc2626','#1c040d'],'#fca5a5','stripes'],['Rainbow Prism','🌈',['#f472b6','#38bdf8'],'#fde047','rainbow'],
+    ['Astral Diamond','💎',['#ffffff','#0284c7'],'#bae6fd','crystal'],['Phoenix Flame','🔥',['#fef08a','#991b1b'],'#fb923c','neon'],
+    ['Quantum Matrix','🧬',['#4ade80','#052e16'],'#86efac','neon'],['Omega Celestial','🌟',['#ffffff','#7e22ce'],'#fde047','rainbow']
+  ].map(function (d, idx) {
+    return { id: 'cs_' + idx, name: d[0], icon: d[1], tint: d[2], outline: d[3], pattern: d[4], price: tierPrice(idx, 14500) };
+  });
+
+  var SKY_SKINS = [
+    ['Classic Horizon','🌤️','#38bdf8','#bae6fd'],['Morning Dew','🌄','#60a5fa','#dbeafe'],['Spring Meadow','🌱','#0ea5e9','#bbf7d0'],
+    ['Golden Dawn','🌅','#f59e0b','#fef3c7'],['Cotton Sky','🎀','#f472b6','#fce7f3'],['Mint Lagoon','🏝️','#14b8a6','#ccfbf1'],
+    ['Desert Mirage','🏜️','#ea580c','#fed7aa'],['Cherry Sky','🌸','#ec4899','#fbcfe8'],['Lavender Dusk','🪻','#8b5cf6','#ede9fe'],
+    ['Tropical Sea','🐠','#0284c7','#99f6e4'],['Autumn Maple','🍁','#dc2626','#fde68a'],['Sunset Paradise','🌇','#e11d48','#fdba74'],
+    ['Emerald Mist','🌲','#059669','#a7f3d0'],['Amber Canyon','🪨','#b45309','#fde047'],['Midnight Blue','🌙','#1e3a8a','#60a5fa'],
+    ['Cyber Twilight','🌆','#4f46e5','#c084fc'],['Arctic Aurora','🌌','#0d9488','#6ee7b7'],['Toxic Fog','☣️','#3f6212','#bef264'],
+    ['Volcano Ash','🌋','#7f1d1d','#fb923c'],['Retro Synthwave','🕹️','#701a75','#f472b6'],['Jade Dynasty','🏮','#065f46','#fde047'],
+    ['Deep Abyss','🐙','#0f172a','#38bdf8'],['Neon Tokyo','🗼','#312e81','#22d3ee'],['Blood Eclipse','🌑','#7f1d1d','#f87171'],
+    ['Starfall Night','🌠','#020617','#818cf8'],['Solar Corona','☀️','#9a3412','#fef08a'],['Void Dimension','🕳️','#1e1b4b','#a855f7'],
+    ['Golden Olympus','🏛️','#854d0e','#fef9c3'],['Quantum Grid','💠','#052e16','#4ade80'],['Omega Nebula','🪐','#4c1d95','#f472b6']
+  ].map(function (d, idx) {
+    return { id: 'sky_' + idx, name: d[0], icon: d[1], price: tierPrice(idx, 15000), phases: [[d[2], d[3]], [d[2], '#64748b'], ['#334155', d[2]], ['#1e1b4b', d[2]], ['#020617', d[2]]] };
+  });
+
+  var EFFECT_SKINS = [
+    ['Mặc Định','💨','none','#ffffff'],['Bụi Gió Nhẹ','🌬️','trail','#bae6fd'],['Bọt Bong Bóng','🫧','trail','#67e8f9'],
+    ['Giọt Mưa Rơi','💧','rain','#60a5fa'],['Hoa Anh Đào','🌸','trail','#f9a8d4'],['Tuyết Mùa Đông','❄️','trail','#ecfeff'],
+    ['Lá Phong Bay','🍁','trail','#fb923c'],['Đom Đóm Đêm','✨','orbit','#fde047'],['Tia Chớp Tĩnh Điện','⚡','sparks','#facc15'],
+    ['Tàn Lửa Bùng Cháy','🔥','trail','#f97316'],['Khói Độc Lục','🧪','trail','#84cc16'],['Vòng Neon Lam','💠','ring','#22d3ee'],
+    ['Bụi Sao Ngân Hà','🌟','trail','#e879f9'],['Trái Tim Bay','💖','trail','#f43f5e'],['Nốt Nhạc Vui','🎵','trail','#a78bfa'],
+    ['Nhiễu Pixel','👾','sparks','#4ade80'],['Mưa Tiền Vàng','🪙','trail','#fbbf24'],['Bóng Ma U Ám','👻','orbit','#94a3b8'],
+    ['Vệ Tinh Plasma','🔮','orbit','#c084fc'],['Vành Đai Mặt Trời','☀️','ring','#f59e0b'],['Cầu Vồng Bảy Sắc','🌈','rainbow','#ffffff'],
+    ['Mảnh Băng Sắc','💎','sparks','#38bdf8'],['Mưa Sao Băng','🌠','trail','#fde047'],['Xúc Tu Hư Không','🕸️','ring','#7e22ce'],
+    ['Vòng Ma Pháp','✡️','ring','#fb7185'],['Bướm Ánh Sáng','🦋','orbit','#67e8f9'],['Hào Quang Thiên Lôi','🌩️','sparks','#ffffff'],
+    ['Lăng Kính Vỡ','💠','rainbow','#38bdf8'],['Hơi Thở Rồng Lửa','🐉','sparks','#ef4444'],['Hố Đen Omega','🕳️','ring','#e879f9']
+  ].map(function (d, idx) {
+    return { id: 'fx_' + idx, name: d[0], icon: d[1], kind: d[2], color: d[3], price: tierPrice(idx, 13500) };
+  });
+
+  var FACE_SKINS = [
+    ['Bình Thường','🙂','normal'],['Vui Vẻ','😊','happy'],['Nhếch Mép Bựa','😏','smirk'],['Mắt Lác Vô Tri','🤪','derp'],
+    ['Thè Lưỡi Lêu Lêu','😛','blep'],['Khóc Dòng Meme','😭','cry_meme'],['Mặt Đơ Bất Cần','😑','deadpan'],['Sốc Tận Óc','😱','shock'],
+    ['Cáu Gắt Sấm Sét','😠','angry'],['Mèo UwU','🐱','uwu'],['Chóng Mặt','😵','dizzy'],['Mọt Sách Răng Hô','🤓','nerd'],
+    ['Kính Râm Ngầu Lòi','😎','cool'],['Cười Gian Tà','😈','gremlin'],['Mắt Trái Tim','😍','heart'],['Mắt Tiền Vàng','🤑','dollar'],
+    ['Ngái Ngủ Chảy Dãi','🤤','sleepy'],['Mặt Hề Meme','🤡','clown'],['Tượng Đá Moai','🗿','moai'],['Ma Cà Rồng','🧛','vampire'],
+    ['Liếc Mắt Nghi Ngờ','🤨','sus'],['Não Cá Vàng','🥴','brainrot'],['Sôi Máu Phun Khói','🤬','rage'],['Hồn Bay Phách Lạc','👻','ghost'],
+    ['Một Mắt Khổng Lồ','👁️','cyclops'],['Mắt Quét Cyborg','🤖','cyborg'],['Bắn Tia Laser','⚡','laser'],['Vua Chảnh Cún','👑','king'],
+    ['Ánh Nhìn Hư Không','🕳️','void_gaze'],['Giga Bão Tạc Tượng','🗿','gigachad']
+  ].map(function (d, idx) {
+    return { id: 'face_' + idx, name: d[0], icon: d[1], type: d[2], price: idx < 2 ? 0 : tierPrice(idx, 12000) };
+  });
+
+  var FOOD_TYPES = [
+    { type: 'wind', xp: 9, r: 10, color: '#a5f3fc', icon: '🌬️', weight: 44 },
+    { type: 'rain', xp: 14, r: 11, color: '#60a5fa', icon: '💧', weight: 32 },
+    { type: 'lightning', xp: 28, r: 14, color: '#fde047', icon: '⚡', weight: 16 },
+    { type: 'tornado', xp: 55, r: 19, color: '#c084fc', icon: '🌪️', weight: 8 }
+  ];
+  var BOT_NAMES = ['Nimbus','Zephyr','Typhoon','Stratus','Vortex','Kumo','Gale','ThunderX','Aurora','Cyclone','Mây Trắng','Bão Tố','Tempest','Bolt99','Skye','Blizzard','TornadoPro','Chớp Đêm','Cirrus','Monsoon'];
+
+  function findById(arr, id) {
+    for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i];
+    return null;
+  }
+
+  var STORAGE_KEY = 'cloud_io_save_v2';
+  var saveData = {
+    gold: 150, name: 'StormCloud', lang: 'vi', sfxVol: 75, bgmVol: 55, quality: 'med',
+    ownedClouds: ['cs_0'], equippedCloud: 'cs_0', ownedSkies: ['sky_0'], equippedSky: 'sky_0',
+    ownedEffects: ['fx_0'], equippedEffect: 'fx_0', ownedFaces: ['face_0', 'face_1'], equippedFace: 'face_0'
+  };
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { var parsed = JSON.parse(raw); for (var k in parsed) if (Object.prototype.hasOwnProperty.call(parsed, k)) saveData[k] = parsed[k]; }
+  } catch (e) {}
+  function persistSave() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData)); } catch (e) {} }
+
+  var sound = {
+    ctx: null, bgmTimer: null, step: 0, intensity: 0, isPlayingBgm: false,
+    init: function () {
+      try {
+        if (!this.ctx) { var AudioCtx = window.AudioContext || window.webkitAudioContext; if (AudioCtx) this.ctx = new AudioCtx(); }
+        if (this.ctx && this.ctx.state === 'suspended' && typeof this.ctx.resume === 'function') {
+          var p = this.ctx.resume(); if (p && typeof p.catch === 'function') p.catch(function () {});
+        }
+      } catch (e) {}
+    },
+    sfxGain: function () { return (saveData.sfxVol / 100) * 0.35; },
+    bgmGain: function () { return (saveData.bgmVol / 100) * 0.22; },
+    playTone: function (freq, dur, type, volMul, slideTo) {
+      try {
+        if (!this.ctx || saveData.sfxVol <= 0) return;
+        var now = this.ctx.currentTime, osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+        osc.type = type || 'sine'; osc.frequency.setValueAtTime(freq, now);
+        if (slideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(30, slideTo), now + dur);
+        gain.gain.setValueAtTime(this.sfxGain() * (volMul || 1), now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+        osc.connect(gain); gain.connect(this.ctx.destination); osc.start(now); osc.stop(now + dur);
+      } catch (e) {}
+    },
+    playEat: function (ft) {
+      if (ft === 'wind') this.playTone(540, 0.1, 'sine', 0.5, 780);
+      else if (ft === 'rain') this.playTone(690, 0.11, 'triangle', 0.55, 940);
+      else if (ft === 'lightning') { this.playTone(880, 0.08, 'sawtooth', 0.42, 1320); var s = this; setTimeout(function () { s.playTone(1200, 0.1, 'square', 0.28, 1560); }, 40); }
+      else this.playTone(360, 0.17, 'sawtooth', 0.58, 900);
+    },
+    playCollide: function (won) {
+      if (won) { this.playTone(230, 0.15, 'sawtooth', 0.85, 95); var s = this; setTimeout(function () { s.playTone(460, 0.18, 'triangle', 0.7, 680); }, 70); }
+      else this.playTone(180, 0.25, 'sawtooth', 0.85, 55);
+    },
+    playLevelUp: function () { var s = this; [523, 659, 784, 1046].forEach(function (n, i) { setTimeout(function () { s.playTone(n, 0.14, 'triangle', 0.65); }, i * 60); }); },
+    playDash: function () { this.playTone(340, 0.14, 'sine', 0.5, 150); },
+    playThunder: function () {
+      try {
+        if (!this.ctx || saveData.sfxVol <= 0) return;
+        var now = this.ctx.currentTime, bs = Math.floor(this.ctx.sampleRate * 0.55), buf = this.ctx.createBuffer(1, bs, this.ctx.sampleRate), d = buf.getChannelData(0);
+        for (var i = 0; i < bs; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bs * 0.35));
+        var src = this.ctx.createBufferSource(); src.buffer = buf;
+        var fl = this.ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 260;
+        var g = this.ctx.createGain(); g.gain.value = this.sfxGain() * 0.65;
+        src.connect(fl); fl.connect(g); g.connect(this.ctx.destination); src.start(now);
+      } catch (e) {}
+    },
+    startBgm: function () {
+      this.init(); if (this.isPlayingBgm) return;
+      this.isPlayingBgm = true; this.step = 0; var self = this;
+      var happyLead = [523.25,659.25,783.99,659.25,880,783.99,659.25,587.33,523.25,587.33,659.25,783.99,1046.5,880,783.99,659.25];
+      var happyBass = [130.81,196,164.81,196,174.61,220,196,146.83];
+      var midLead = [440,523.25,587.33,659.25,587.33,523.25,493.88,440];
+      var stormLead = [293.66,349.23,440,415.3,349.23,329.63,293.66,466.16,587.33,554.37,440,466.16,587.33,698.46,659.25,587.33];
+      var stormBass = [73.42,73.42,87.31,82.41,73.42,73.42,116.54,110];
+      function tick() {
+        if (!self.isPlayingBgm) return;
+        try {
+          var vol = self.bgmGain();
+          if (self.ctx && vol > 0.005) {
+            var now = self.ctx.currentTime, ph = self.intensity, osc = self.ctx.createOscillator(), g = self.ctx.createGain(), freq;
+            if (ph === 0) { osc.type = 'sine'; freq = happyLead[self.step % happyLead.length]; g.gain.setValueAtTime(vol * 0.42, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.19); }
+            else if (ph === 1) { osc.type = 'triangle'; freq = happyLead[(self.step * 3) % happyLead.length]; g.gain.setValueAtTime(vol * 0.4, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.18); }
+            else if (ph === 2) { osc.type = 'triangle'; freq = midLead[self.step % midLead.length]; g.gain.setValueAtTime(vol * 0.44, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.2); }
+            else { osc.type = ph >= 4 ? 'sawtooth' : 'square'; freq = stormLead[self.step % stormLead.length]; g.gain.setValueAtTime(vol * (ph === 4 ? 0.3 : 0.24), now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.14); }
+            osc.frequency.setValueAtTime(freq, now); osc.connect(g); g.connect(self.ctx.destination); osc.start(now); osc.stop(now + 0.21);
+            if (ph >= 3 || self.step % 2 === 0) {
+              var bass = self.ctx.createOscillator(), bg = self.ctx.createGain();
+              bass.type = ph >= 3 ? 'sawtooth' : 'triangle';
+              bass.frequency.setValueAtTime(ph <= 1 ? happyBass[Math.floor(self.step / 2) % happyBass.length] : stormBass[self.step % stormBass.length], now);
+              bg.gain.setValueAtTime(vol * (ph <= 1 ? 0.28 : 0.42), now); bg.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+              bass.connect(bg); bg.connect(self.ctx.destination); bass.start(now); bass.stop(now + 0.18);
+            }
+          }
+        } catch (e) {}
+        self.step++;
+        self.bgmTimer = setTimeout(tick, [235, 205, 195, 160, 130][self.intensity] || 200);
+      }
+      tick();
+    },
+    stopBgm: function () { this.isPlayingBgm = false; clearTimeout(this.bgmTimer); }
+  };
+
+  function drawCloudFace(tCtx, cx, cy, r, angle, ft, isHighLv) {
+    var fx = cx + Math.cos(angle) * r * 0.14, fy = cy + Math.sin(angle) * r * 0.14;
+    var es = Math.max(2.2, r * 0.085), eyeDx = r * 0.22, ec = isHighLv ? '#fef08a' : '#0f172a';
+    tCtx.save(); tCtx.strokeStyle = ec; tCtx.fillStyle = ec; tCtx.lineWidth = Math.max(1.5, r * 0.06); tCtx.lineCap = 'round';
+    if (ft === 'normal') {
+      tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.05, es, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.05, es, 0, 6.28); tCtx.fill();
+      tCtx.beginPath(); tCtx.arc(fx, fy + r * 0.06, r * 0.12, 0.2, 2.94); tCtx.stroke();
+    } else if (ft === 'happy') {
+      tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.02, es * 1.2, Math.PI, 0); tCtx.moveTo(fx + eyeDx - es * 1.2, fy - r * 0.02); tCtx.arc(fx + eyeDx, fy - r * 0.02, es * 1.2, Math.PI, 0); tCtx.stroke();
+      tCtx.fillStyle = '#fb7185'; tCtx.beginPath(); tCtx.arc(fx - eyeDx * 1.45, fy + r * 0.08, es * 0.85, 0, 6.28); tCtx.arc(fx + eyeDx * 1.45, fy + r * 0.08, es * 0.85, 0, 6.28); tCtx.fill();
+      tCtx.beginPath(); tCtx.arc(fx, fy + r * 0.06, r * 0.13, 0.1, 3.04); tCtx.stroke();
+    } else if (ft === 'smirk') {
+      tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.05, es, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.05, es, 0, 6.28); tCtx.fill();
+      tCtx.beginPath(); tCtx.moveTo(fx - eyeDx * 1.4, fy - r * 0.2); tCtx.lineTo(fx - eyeDx * 0.4, fy - r * 0.13); tCtx.moveTo(fx + eyeDx * 0.4, fy - r * 0.16); tCtx.lineTo(fx + eyeDx * 1.4, fy - r * 0.25); tCtx.moveTo(fx - r * 0.14, fy + r * 0.14); tCtx.quadraticCurveTo(fx + r * 0.08, fy + r * 0.22, fx + r * 0.22, fy + r * 0.06); tCtx.stroke();
+    } else if (ft === 'derp') {
+      tCtx.fillStyle = '#fff'; tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.06, es * 1.9, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.02, es * 1.3, 0, 6.28); tCtx.fill(); tCtx.stroke();
+      tCtx.fillStyle = '#0f172a'; tCtx.beginPath(); tCtx.arc(fx - eyeDx - es * 0.6, fy - r * 0.1, es * 0.7, 0, 6.28); tCtx.arc(fx + eyeDx + es * 0.5, fy + r * 0.02, es * 0.55, 0, 6.28); tCtx.fill();
+      tCtx.beginPath(); tCtx.moveTo(fx - r * 0.18, fy + r * 0.14); tCtx.lineTo(fx + r * 0.18, fy + r * 0.1); tCtx.stroke();
+      tCtx.fillStyle = '#f43f5e'; tCtx.beginPath(); tCtx.arc(fx + r * 0.08, fy + r * 0.16, es * 1.1, 0, Math.PI); tCtx.fill();
+    } else if (ft === 'blep') {
+      tCtx.beginPath(); tCtx.moveTo(fx - eyeDx - es, fy - r * 0.1); tCtx.lineTo(fx - eyeDx + es, fy - r * 0.04); tCtx.lineTo(fx - eyeDx - es, fy + r * 0.02); tCtx.stroke();
+      tCtx.beginPath(); tCtx.arc(fx + eyeDx, fy - r * 0.05, es, 0, 6.28); tCtx.fill();
+      tCtx.fillStyle = '#fb7185'; tCtx.beginPath(); tCtx.arc(fx, fy + r * 0.12, r * 0.12, 0, Math.PI); tCtx.fill(); tCtx.stroke();
+    } else if (ft === 'cry_meme') {
+      tCtx.fillStyle = '#38bdf8'; tCtx.fillRect(fx - eyeDx - es * 0.9, fy - r * 0.02, es * 1.8, r * 0.42); tCtx.fillRect(fx + eyeDx - es * 0.9, fy - r * 0.02, es * 1.8, r * 0.42);
+      tCtx.beginPath(); tCtx.moveTo(fx - eyeDx - es, fy - r * 0.05); tCtx.lineTo(fx - eyeDx + es, fy - r * 0.05); tCtx.moveTo(fx + eyeDx - es, fy - r * 0.05); tCtx.lineTo(fx + eyeDx + es, fy - r * 0.05); tCtx.stroke();
+      tCtx.fillStyle = '#991b1b'; tCtx.beginPath(); tCtx.ellipse(fx, fy + r * 0.18, r * 0.16, r * 0.11, 0, 0, 6.28); tCtx.fill();
+    } else if (ft === 'deadpan') {
+      tCtx.beginPath(); tCtx.moveTo(fx - eyeDx - es * 1.2, fy - r * 0.04); tCtx.lineTo(fx - eyeDx + es * 1.2, fy - r * 0.04); tCtx.moveTo(fx + eyeDx - es * 1.2, fy - r * 0.04); tCtx.lineTo(fx + eyeDx + es * 1.2, fy - r * 0.04); tCtx.moveTo(fx - r * 0.14, fy + r * 0.14); tCtx.lineTo(fx + r * 0.14, fy + r * 0.14); tCtx.stroke();
+    } else if (ft === 'shock') {
+      tCtx.fillStyle = '#fff'; tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.06, es * 1.7, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.06, es * 1.7, 0, 6.28); tCtx.fill(); tCtx.stroke();
+      tCtx.fillStyle = '#0f172a'; tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.06, es * 0.5, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.06, es * 0.5, 0, 6.28); tCtx.fill();
+      tCtx.beginPath(); tCtx.ellipse(fx, fy + r * 0.18, r * 0.11, r * 0.15, 0, 0, 6.28); tCtx.fill();
+    } else if (ft === 'angry' || ft === 'rage') {
+      if (ft === 'rage') { tCtx.fillStyle = 'rgba(239,68,68,.45)'; tCtx.beginPath(); tCtx.arc(fx, fy, r * 0.55, 0, 6.28); tCtx.fill(); }
+      tCtx.fillStyle = ft === 'rage' ? '#ef4444' : ec; tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.02, es, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.02, es, 0, 6.28); tCtx.fill();
+      tCtx.beginPath(); tCtx.moveTo(fx - eyeDx * 1.4, fy - r * 0.22); tCtx.lineTo(fx - eyeDx * 0.3, fy - r * 0.1); tCtx.moveTo(fx + eyeDx * 1.4, fy - r * 0.22); tCtx.lineTo(fx + eyeDx * 0.3, fy - r * 0.1); tCtx.moveTo(fx - r * 0.16, fy + r * 0.2); tCtx.arc(fx, fy + r * 0.25, r * 0.14, Math.PI + 0.3, -0.3); tCtx.stroke();
+    } else if (ft === 'uwu') {
+      tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.05, es * 1.1, 0, Math.PI); tCtx.moveTo(fx + eyeDx - es * 1.1, fy - r * 0.05); tCtx.arc(fx + eyeDx, fy - r * 0.05, es * 1.1, 0, Math.PI); tCtx.stroke();
+      tCtx.beginPath(); tCtx.arc(fx - r * 0.06, fy + r * 0.08, r * 0.06, 0, Math.PI); tCtx.arc(fx + r * 0.06, fy + r * 0.08, r * 0.06, 0, Math.PI); tCtx.stroke();
+    } else if (ft === 'dizzy' || ft === 'brainrot') {
+      [fx - eyeDx, fx + eyeDx].forEach(function (ex) { tCtx.beginPath(); tCtx.arc(ex, fy - r * 0.04, es * 1.4, 0, 6.28); tCtx.stroke(); tCtx.beginPath(); tCtx.arc(ex, fy - r * 0.04, es * 0.5, 0, 6.28); tCtx.fill(); });
+      tCtx.beginPath(); tCtx.moveTo(fx - r * 0.18, fy + r * 0.16); tCtx.quadraticCurveTo(fx - r * 0.06, fy + r * 0.08, fx, fy + r * 0.16); tCtx.quadraticCurveTo(fx + r * 0.06, fy + r * 0.24, fx + r * 0.18, fy + r * 0.16); tCtx.stroke();
+    } else if (ft === 'nerd') {
+      tCtx.fillStyle = 'rgba(255,255,255,.4)'; tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.05, es * 2.1, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.05, es * 2.1, 0, 6.28); tCtx.fill(); tCtx.stroke();
+      tCtx.beginPath(); tCtx.moveTo(fx - eyeDx + es * 2.1, fy - r * 0.05); tCtx.lineTo(fx + eyeDx - es * 2.1, fy - r * 0.05); tCtx.stroke();
+      tCtx.fillStyle = '#0f172a'; tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.05, es * 0.85, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.05, es * 0.85, 0, 6.28); tCtx.fill();
+      tCtx.fillStyle = '#fff'; tCtx.fillRect(fx - r * 0.1, fy + r * 0.12, r * 0.09, r * 0.12); tCtx.fillRect(fx + r * 0.01, fy + r * 0.12, r * 0.09, r * 0.12);
+    } else if (ft === 'cool' || ft === 'gigachad') {
+      tCtx.fillStyle = '#09090b'; tCtx.fillRect(fx - eyeDx - es * 2.1, fy - r * 0.16, es * 3.8, es * 2.4); tCtx.fillRect(fx + eyeDx - es * 1.7, fy - r * 0.16, es * 3.8, es * 2.4); tCtx.fillRect(fx - eyeDx * 0.4, fy - r * 0.12, eyeDx * 0.8, es * 0.6);
+      tCtx.fillStyle = '#fff'; tCtx.fillRect(fx - eyeDx - es * 1.5, fy - r * 0.13, es * 1.1, es * 0.45); tCtx.fillRect(fx + eyeDx - es * 1.1, fy - r * 0.13, es * 1.1, es * 0.45);
+      tCtx.beginPath(); tCtx.moveTo(fx - r * 0.16, fy + r * 0.15); tCtx.lineTo(fx + r * 0.16, fy + r * 0.1); tCtx.stroke();
+    } else if (ft === 'heart') {
+      tCtx.fillStyle = '#f43f5e';
+      [fx - eyeDx, fx + eyeDx].forEach(function (hx) { tCtx.beginPath(); tCtx.arc(hx - es * 0.5, fy - r * 0.06, es * 0.75, 0, 6.28); tCtx.arc(hx + es * 0.5, fy - r * 0.06, es * 0.75, 0, 6.28); tCtx.lineTo(hx, fy + es * 1.4); tCtx.fill(); });
+      tCtx.beginPath(); tCtx.arc(fx, fy + r * 0.08, r * 0.12, 0.1, 3.04); tCtx.stroke();
+    } else if (ft === 'clown') {
+      tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.08, es, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.08, es, 0, 6.28); tCtx.fill();
+      tCtx.fillStyle = '#ef4444'; tCtx.beginPath(); tCtx.arc(fx, fy + r * 0.04, es * 1.6, 0, 6.28); tCtx.fill();
+      tCtx.strokeStyle = '#ef4444'; tCtx.beginPath(); tCtx.arc(fx, fy + r * 0.1, r * 0.22, 0.2, 2.94); tCtx.stroke();
+    } else if (ft === 'moai') {
+      tCtx.fillStyle = '#64748b'; tCtx.fillRect(fx - eyeDx * 1.4, fy - r * 0.22, eyeDx * 2.8, r * 0.11);
+      tCtx.fillStyle = '#1e293b'; tCtx.fillRect(fx - eyeDx - es * 0.7, fy - r * 0.08, es * 1.4, es * 0.9); tCtx.fillRect(fx + eyeDx - es * 0.7, fy - r * 0.08, es * 1.4, es * 0.9); tCtx.fillRect(fx - r * 0.05, fy - r * 0.06, r * 0.1, r * 0.2); tCtx.fillRect(fx - r * 0.18, fy + r * 0.2, r * 0.36, r * 0.06);
+    } else if (ft === 'sus') {
+      tCtx.fillStyle = '#fff'; tCtx.fillRect(fx - eyeDx - es * 1.3, fy - r * 0.1, es * 2.6, es * 1.1); tCtx.fillRect(fx + eyeDx - es * 1.3, fy - r * 0.12, es * 2.6, es * 1.5);
+      tCtx.fillStyle = '#0f172a'; tCtx.beginPath(); tCtx.arc(fx - eyeDx + es * 0.5, fy - r * 0.05, es * 0.55, 0, 6.28); tCtx.arc(fx + eyeDx + es * 0.5, fy - r * 0.05, es * 0.65, 0, 6.28); tCtx.fill();
+      tCtx.beginPath(); tCtx.moveTo(fx - eyeDx * 1.5, fy - r * 0.22); tCtx.lineTo(fx - eyeDx * 0.3, fy - r * 0.22); tCtx.moveTo(fx + eyeDx * 0.3, fy - r * 0.28); tCtx.quadraticCurveTo(fx + eyeDx * 0.9, fy - r * 0.38, fx + eyeDx * 1.5, fy - r * 0.24); tCtx.moveTo(fx - r * 0.14, fy + r * 0.16); tCtx.lineTo(fx + r * 0.12, fy + r * 0.13); tCtx.stroke();
+    } else if (ft === 'sleepy') {
+      tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.04, es * 1.2, 0, Math.PI); tCtx.moveTo(fx + eyeDx - es * 1.2, fy - r * 0.04); tCtx.arc(fx + eyeDx, fy - r * 0.04, es * 1.2, 0, Math.PI); tCtx.stroke();
+      tCtx.fillStyle = '#93c5fd'; tCtx.beginPath(); tCtx.arc(fx + r * 0.12, fy + r * 0.16, es * 1.5, 0, 6.28); tCtx.fill();
+    } else if (ft === 'cyclops') {
+      tCtx.fillStyle = '#fff'; tCtx.beginPath(); tCtx.arc(fx, fy - r * 0.06, es * 2.5, 0, 6.28); tCtx.fill(); tCtx.stroke();
+      tCtx.fillStyle = '#ef4444'; tCtx.beginPath(); tCtx.arc(fx, fy - r * 0.06, es * 1.1, 0, 6.28); tCtx.fill();
+      tCtx.beginPath(); tCtx.arc(fx, fy + r * 0.16, r * 0.14, 0.2, 2.94); tCtx.stroke();
+    } else if (ft === 'cyborg' || ft === 'laser') {
+      tCtx.fillStyle = '#ef4444'; tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.05, es * 1.3, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.05, es * 1.3, 0, 6.28); tCtx.fill();
+      if (ft === 'laser') {
+        tCtx.strokeStyle = 'rgba(239,68,68,.7)'; tCtx.lineWidth = Math.max(2, r * 0.07);
+        tCtx.beginPath(); tCtx.moveTo(fx - eyeDx, fy - r * 0.05); tCtx.lineTo(fx - eyeDx + Math.cos(angle) * r * 1.5, fy - r * 0.05 + Math.sin(angle) * r * 1.5);
+        tCtx.moveTo(fx + eyeDx, fy - r * 0.05); tCtx.lineTo(fx + eyeDx + Math.cos(angle) * r * 1.5, fy - r * 0.05 + Math.sin(angle) * r * 1.5); tCtx.stroke();
+      }
+    } else {
+      tCtx.fillStyle = ft === 'dollar' ? '#22c55e' : (ft === 'void_gaze' ? '#e879f9' : ec);
+      tCtx.beginPath(); tCtx.arc(fx - eyeDx, fy - r * 0.05, es * 1.15, 0, 6.28); tCtx.arc(fx + eyeDx, fy - r * 0.05, es * 1.15, 0, 6.28); tCtx.fill();
+      tCtx.beginPath(); tCtx.arc(fx, fy + r * 0.08, r * 0.15, 0.1, 3.04); tCtx.stroke();
+      if (ft === 'vampire') {
+        tCtx.fillStyle = '#fff'; tCtx.beginPath();
+        tCtx.moveTo(fx - r * 0.1, fy + r * 0.14); tCtx.lineTo(fx - r * 0.06, fy + r * 0.28); tCtx.lineTo(fx - r * 0.02, fy + r * 0.14);
+        tCtx.moveTo(fx + r * 0.02, fy + r * 0.14); tCtx.lineTo(fx + r * 0.06, fy + r * 0.28); tCtx.lineTo(fx + r * 0.1, fy + r * 0.14); tCtx.fill();
+      }
+      if (ft === 'king') {
+        tCtx.fillStyle = '#fbbf24'; tCtx.beginPath();
+        tCtx.moveTo(fx - r * 0.22, fy - r * 0.28); tCtx.lineTo(fx - r * 0.24, fy - r * 0.48); tCtx.lineTo(fx - r * 0.08, fy - r * 0.36);
+        tCtx.lineTo(fx, fy - r * 0.52); tCtx.lineTo(fx + r * 0.08, fy - r * 0.36); tCtx.lineTo(fx + r * 0.24, fy - r * 0.48); tCtx.lineTo(fx + r * 0.22, fy - r * 0.28);
+        tCtx.closePath(); tCtx.fill();
+      }
+    }
+    tCtx.restore();
+  }
+
+  function el(id) { return document.getElementById(id); }
+  var gameMode = 'offline', shopTab = 'cloud';
+  function t(k) { return (I18N[saveData.lang] && I18N[saveData.lang][k]) || I18N.vi[k] || k; }
+  function applyLocalization() {
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i++) nodes[i].textContent = t(nodes[i].getAttribute('data-i18n'));
+    el('onlineNotice').textContent = gameMode === 'online' ? t('onlineHint') : t('offlineHint');
+    el('lobbyGold').textContent = saveData.gold; el('shopGold').textContent = saveData.gold;
+  }
+
+  function renderShop() {
+    var grid = el('shopGrid'); grid.innerHTML = '';
+    var items, owned, equipped, keyOwned, keyEquipped;
+    if (shopTab === 'cloud') { items = CLOUD_SKINS; owned = saveData.ownedClouds; equipped = saveData.equippedCloud; keyOwned = 'ownedClouds'; keyEquipped = 'equippedCloud'; }
+    else if (shopTab === 'sky') { items = SKY_SKINS; owned = saveData.ownedSkies; equipped = saveData.equippedSky; keyOwned = 'ownedSkies'; keyEquipped = 'equippedSky'; }
+    else if (shopTab === 'effect') { items = EFFECT_SKINS; owned = saveData.ownedEffects; equipped = saveData.equippedEffect; keyOwned = 'ownedEffects'; keyEquipped = 'equippedEffect'; }
+    else { items = FACE_SKINS; owned = saveData.ownedFaces; equipped = saveData.equippedFace; keyOwned = 'ownedFaces'; keyEquipped = 'equippedFace'; }
+
+    items.forEach(function (item) {
+      var isOwned = owned.indexOf(item.id) !== -1, isEq = equipped === item.id;
+      var card = document.createElement('div'); card.className = 'skin-item' + (isEq ? ' equipped' : '');
+      var previewHtml = '';
+      if (shopTab === 'face') previewHtml = '<div class="skin-preview" style="background:#e0f2fe"><canvas width="60" height="40"></canvas></div>';
+      else {
+        var bg = 'background:rgba(255,255,255,.1)';
+        if (shopTab === 'cloud' && item.tint) bg = 'background:linear-gradient(135deg,' + item.tint[0] + ',' + item.tint[1] + ')';
+        if (shopTab === 'sky') bg = 'background:linear-gradient(180deg,' + item.phases[0][0] + ',' + item.phases[0][1] + ')';
+        if (shopTab === 'effect') bg = 'background:radial-gradient(circle,' + item.color + '55,rgba(15,23,42,.8))';
+        previewHtml = '<div class="skin-preview" style="' + bg + '">' + item.icon + '</div>';
+      }
+      card.innerHTML = previewHtml + '<div class="skin-name">' + item.name + '</div><button class="btn ' + (isEq ? 'btn-glass' : isOwned ? 'btn-primary' : 'btn-gold') + '" style="width:100%;padding:6px;font-size:.78rem">' + (isEq ? '✓ ' + t('equipped') : isOwned ? t('equip') : '🪙 ' + item.price + ' • ' + t('buy')) + '</button>';
+      if (shopTab === 'face') { var fc = card.querySelector('canvas'); if (fc) drawCloudFace(fc.getContext('2d'), 30, 20, 26, 0, item.type, false); }
+      card.querySelector('button').onclick = function () {
+        sound.init(); if (isEq) return;
+        if (isOwned) { saveData[keyEquipped] = item.id; sound.playTone(620, 0.1, 'triangle', 0.5); }
+        else {
+          if (saveData.gold < item.price) { alert(t('notEnoughGold')); return; }
+          saveData.gold -= item.price; saveData[keyOwned].push(item.id); saveData[keyEquipped] = item.id; sound.playLevelUp();
+        }
+        persistSave(); applyLocalization(); renderShop(); renderLobbyBackdrop();
+      };
+      grid.appendChild(card);
+    });
+  }
+
+  function renderLevelsDex() {
+    var grid = el('levelsGrid'); grid.innerHTML = '';
+    CLOUD_LEVELS.forEach(function (lv) {
+      var card = document.createElement('div'); card.className = 'skin-item';
+      card.innerHTML = '<div class="skin-preview" style="background:linear-gradient(135deg,' + lv.c1 + ',' + lv.c2 + ')">☁️</div><div class="skin-name">Lv.' + lv.lv + ' • ' + (saveData.lang === 'vi' ? lv.vi : lv.en) + '</div><div style="font-size:.73rem;color:#94a3b8">XP: ' + lv.xp + '+</div>';
+      grid.appendChild(card);
+    });
+  }
+
+  var canvas = el('gameCanvas'), ctx = canvas.getContext('2d', { alpha: false }) || canvas.getContext('2d');
+  var miniCanvas = el('minimapCanvas'), miniCtx = miniCanvas.getContext('2d');
+  var WORLD_SIZE = 4400, MATCH_DURATION = 180, viewW = 800, viewH = 600, dpr = 1, running = false, animId = null;
+
+  function resizeCanvas() {
+    viewW = window.innerWidth || document.documentElement.clientWidth || 800;
+    viewH = window.innerHeight || document.documentElement.clientHeight || 600;
+    var maxDpr = saveData.quality === 'low' ? 1 : (saveData.quality === 'med' ? 1.25 : 1.75);
+    dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
+    canvas.width = Math.floor(viewW * dpr); canvas.height = Math.floor(viewH * dpr);
+  }
+  window.addEventListener('resize', function () { resizeCanvas(); if (!running) renderLobbyBackdrop(); });
+
+  var input = { vx: 0, vy: 0, active: false, keys: {} }, joyZone = el('joystickZone'), joyRing = el('joystickRing'), joyKnob = el('joystickKnob');
+  var joyTouchId = null, canvasTouchId = null, mouseJoyDown = false, mouseCanvasDown = false;
+
+  function setKnobVisual(nx, ny) {
+    var r = (joyRing.offsetWidth || 90) * 0.4;
+    joyKnob.style.transform = 'translate(calc(-50% + ' + (nx * r) + 'px), calc(-50% + ' + (ny * r) + 'px))';
+  }
+  function updateJoystickFromPoint(cx, cy) {
+    var rect = joyRing.getBoundingClientRect();
+    var cX = rect.left + rect.width / 2, cY = rect.top + rect.height / 2;
+    var maxR = Math.max(20, (joyRing.offsetWidth || 100) * 0.42), dx = cx - cX, dy = cy - cY, dist = Math.hypot(dx, dy);
+    if (dist > 4) { var cl = Math.min(dist, maxR); input.vx = (dx / dist) * (cl / maxR); input.vy = (dy / dist) * (cl / maxR); input.active = true; setKnobVisual(input.vx, input.vy); }
+    else { input.vx = 0; input.vy = 0; input.active = false; setKnobVisual(0, 0); }
+  }
+  function steerTowardScreenPoint(cx, cy) {
+    var px = player ? viewW / 2 + (player.x - cam.x) * cam.zoom : viewW / 2;
+    var py = player ? viewH / 2 + (player.y - cam.y) * cam.zoom : viewH / 2;
+    var dx = cx - px, dy = cy - py, dist = Math.hypot(dx, dy);
+    if (dist > 8) { input.vx = dx / dist; input.vy = dy / dist; input.active = true; setKnobVisual(input.vx, input.vy); }
+  }
+  function resetInputDir() { joyTouchId = null; canvasTouchId = null; mouseJoyDown = false; mouseCanvasDown = false; input.vx = 0; input.vy = 0; input.active = false; setKnobVisual(0, 0); }
+
+  joyZone.addEventListener('touchstart', function (e) { e.preventDefault(); e.stopPropagation(); joyTouchId = e.changedTouches[0].identifier; updateJoystickFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY); }, { passive: false });
+  joyZone.addEventListener('mousedown', function (e) { e.stopPropagation(); mouseJoyDown = true; updateJoystickFromPoint(e.clientX, e.clientY); });
+  canvas.addEventListener('touchstart', function (e) { if (!running) return; canvasTouchId = e.changedTouches[0].identifier; steerTowardScreenPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY); }, { passive: true });
+  canvas.addEventListener('mousedown', function (e) { if (!running) return; mouseCanvasDown = true; steerTowardScreenPoint(e.clientX, e.clientY); });
+  window.addEventListener('touchmove', function (e) { for (var i = 0; i < e.changedTouches.length; i++) { var tc = e.changedTouches[i]; if (tc.identifier === joyTouchId) updateJoystickFromPoint(tc.clientX, tc.clientY); else if (tc.identifier === canvasTouchId && running) steerTowardScreenPoint(tc.clientX, tc.clientY); } }, { passive: true });
+  window.addEventListener('mousemove', function (e) { if (mouseJoyDown) updateJoystickFromPoint(e.clientX, e.clientY); else if (mouseCanvasDown && running) steerTowardScreenPoint(e.clientX, e.clientY); });
+  window.addEventListener('touchend', function (e) { for (var i = 0; i < e.changedTouches.length; i++) { var id = e.changedTouches[i].identifier; if (id === joyTouchId || id === canvasTouchId) resetInputDir(); } });
+  window.addEventListener('mouseup', function () { if (mouseJoyDown || mouseCanvasDown) resetInputDir(); });
+  window.addEventListener('keydown', function (e) { input.keys[e.code] = true; if (e.code === 'Space' && running) { e.preventDefault(); triggerPlayerDash(); } });
+  window.addEventListener('keyup', function (e) { input.keys[e.code] = false; });
+
+  var clouds = [], foods = [], particles = [], bgClouds = [], player = null, matchTimer = MATCH_DURATION, weatherPhase = 0, lightningFlash = 0, nextThunderIn = 8;
+  var cam = { x: WORLD_SIZE / 2, y: WORLD_SIZE / 2, zoom: 1 }, lastTime = 0, hudTick = 0, fxTick = 0;
+
+  function getLevelData(xp) {
+    for (var i = CLOUD_LEVELS.length - 1; i >= 0; i--) if (xp >= CLOUD_LEVELS[i].xp) return CLOUD_LEVELS[i];
+    return CLOUD_LEVELS[0];
+  }
+  function spawnFood() {
+    var sb = weatherPhase * 3, ws = FOOD_TYPES.map(function (f, i) { return i >= 2 ? f.weight + sb : f.weight; }), tot = 0;
+    for (var i = 0; i < ws.length; i++) tot += ws[i];
+    var r = Math.random() * tot, ft = FOOD_TYPES[0];
+    for (var j = 0; j < FOOD_TYPES.length; j++) { r -= ws[j]; if (r <= 0) { ft = FOOD_TYPES[j]; break; } }
+    foods.push({ x: 80 + Math.random() * (WORLD_SIZE - 160), y: 80 + Math.random() * (WORLD_SIZE - 160), type: ft.type, xp: ft.xp, r: ft.r, color: ft.color, icon: ft.icon, phase: Math.random() * 6.28 });
+  }
+  function createCloud(isP, name, skinId, fxId, faceType, startXp) {
+    var lv = getLevelData(startXp || 0);
+    return { id: Math.random().toString(36).slice(2), isPlayer: isP, name: name, skinId: skinId, fxId: fxId, faceType: faceType, x: 240 + Math.random() * (WORLD_SIZE - 480), y: 240 + Math.random() * (WORLD_SIZE - 480), vx: 0, vy: 0, angle: Math.random() * 6.28, xp: startXp || 0, level: lv.lv, r: lv.r, maxLevel: lv.lv, kills: 0, shield: 2.5, dashTimer: 0, dashCooldown: 0, aiTimer: 0, aiTargetAngle: Math.random() * 6.28 };
+  }
+  function triggerPlayerDash() { if (!player || player.dashCooldown > 0) return; player.dashTimer = 0.35; player.dashCooldown = 3.0; sound.playDash(); spawnBurst(player.x, player.y, '#7dd3fc', 10); }
+  el('dashBtn').addEventListener('click', function (e) { e.stopPropagation(); triggerPlayerDash(); });
+  el('dashBtn').addEventListener('touchstart', function (e) { e.preventDefault(); e.stopPropagation(); triggerPlayerDash(); }, { passive: false });
+
+  function spawnBurst(x, y, color, count) {
+    var cap = saveData.quality === 'low' ? 35 : (saveData.quality === 'med' ? 90 : 160);
+    if (particles.length > cap) return;
+    var n = saveData.quality === 'low' ? Math.ceil(count * 0.4) : count;
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * 6.28, spd = 35 + Math.random() * 130;
+      particles.push({ x: x, y: y, vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, life: 0.5 + Math.random() * 0.3, maxLife: 0.8, r: 2.5 + Math.random() * 3.5, color: color });
+    }
+  }
+  function pushKillFeed(text, color) {
+    var div = document.createElement('div'); div.className = 'kill-msg'; div.style.color = color || '#f8fafc'; div.textContent = text;
+    var feed = el('killFeed'); feed.appendChild(div);
+    if (feed.children.length > 2) feed.removeChild(feed.firstChild);
+    setTimeout(function () { if (div.parentNode) div.parentNode.removeChild(div); }, 2000);
+  }
+
+  function startMatch() {
+    try {
+      sound.init(); sound.startBgm(); resizeCanvas();
+      saveData.name = (el('playerNameInput').value || '').trim() || 'StormCloud'; persistSave();
+      clouds = []; foods = []; particles = []; bgClouds = []; matchTimer = MATCH_DURATION; weatherPhase = 0; lightningFlash = 0; sound.intensity = 0;
+      for (var i = 0; i < (saveData.quality === 'low' ? 15 : 32); i++) bgClouds.push({ x: Math.random() * WORLD_SIZE, y: Math.random() * WORLD_SIZE, s: 60 + Math.random() * 130, spd: 12 + Math.random() * 20 });
+      var pFace = (findById(FACE_SKINS, saveData.equippedFace) || FACE_SKINS[0]).type;
+      player = createCloud(true, saveData.name, saveData.equippedCloud, saveData.equippedEffect, pFace, 0);
+      clouds.push(player);
+      for (var b = 0; b < (gameMode === 'online' ? 20 : 24); b++) {
+        clouds.push(createCloud(false, BOT_NAMES[b % BOT_NAMES.length], CLOUD_SKINS[Math.floor(Math.random() * 12)].id, EFFECT_SKINS[Math.floor(Math.random() * 10)].id, FACE_SKINS[Math.floor(Math.random() * FACE_SKINS.length)].type, Math.random() < 0.25 ? Math.floor(Math.random() * 160) : 0));
+      }
+      for (var f = 0; f < (saveData.quality === 'low' ? 180 : 260); f++) spawnFood();
+      cam.x = player.x; cam.y = player.y; cam.zoom = 1; resetInputDir();
+      el('lobbyScreen').classList.add('hidden'); el('resultModal').classList.add('hidden'); el('hudLayer').classList.remove('hidden');
+      running = true; lastTime = performance.now();
+      if (animId) cancelAnimationFrame(animId);
+      animId = requestAnimationFrame(gameLoop);
+    } catch (err) { alert('Error: ' + err.message); }
+  }
+
+  function endMatch(forceQuit) {
+    running = false; sound.stopBgm(); if (animId) cancelAnimationFrame(animId);
+    el('hudLayer').classList.add('hidden');
+    if (forceQuit) { el('lobbyScreen').classList.remove('hidden'); renderLobbyBackdrop(); return; }
+    var sorted = clouds.slice().sort(function (a, b) { return b.xp - a.xp; }), myIdx = -1;
+    for (var i = 0; i < sorted.length; i++) { if (sorted[i].isPlayer) { myIdx = i; break; } }
+    var myRank = myIdx >= 0 ? myIdx + 1 : sorted.length;
+    var goldEarned = (myRank === 1 ? 120 : myRank === 2 ? 85 : myRank === 3 ? 60 : Math.max(20, 48 - myRank * 2)) + player.maxLevel * 3 + player.kills * 6;
+    saveData.gold += goldEarned; persistSave(); applyLocalization();
+    var pw = el('podiumWrap'); pw.innerHTML = '';
+    [1, 0, 2].forEach(function (idx) {
+      var c = sorted[idx]; if (!c) return;
+      var col = document.createElement('div'); col.className = 'podium-col podium-' + (idx + 1);
+      col.innerHTML = '<div class="podium-rank">' + ['🥇','🥈','🥉'][idx] + ' #' + (idx + 1) + '</div><div class="podium-name">' + c.name + (c.isPlayer ? ' ⭐' : '') + '</div><div class="podium-score">Lv.' + c.level + ' • ' + Math.floor(c.xp) + ' XP</div>';
+      pw.appendChild(col);
+    });
+    el('resMyRank').textContent = '#' + myRank; el('resMyLevel').textContent = 'Lv.' + player.maxLevel; el('resGoldEarned').textContent = '+' + goldEarned + ' 🪙';
+    el('resultModal').classList.remove('hidden');
+  }
+
+  function update(dt) {
+    matchTimer -= dt; if (matchTimer <= 0) { matchTimer = 0; endMatch(false); return; }
+    var elp = MATCH_DURATION - matchTimer, np = elp < 36 ? 0 : elp < 75 ? 1 : elp < 115 ? 2 : elp < 150 ? 3 : 4;
+    if (np !== weatherPhase) { weatherPhase = np; sound.intensity = np; if (np >= 2) { lightningFlash = 0.6; sound.playThunder(); } }
+    if (weatherPhase >= 3) { nextThunderIn -= dt; if (nextThunderIn <= 0) { lightningFlash = 0.55; sound.playThunder(); nextThunderIn = 5 + Math.random() * 7; } }
+    if (lightningFlash > 0) lightningFlash = Math.max(0, lightningFlash - dt * 1.8);
+    while (foods.length < (saveData.quality === 'low' ? 180 : 260)) spawnFood();
+    fxTick += dt; var emitTrail = fxTick >= 0.09; if (emitTrail) fxTick = 0;
+
+    for (var i = 0; i < clouds.length; i++) {
+      var c = clouds[i];
+      if (c.shield > 0) c.shield = Math.max(0, c.shield - dt);
+      if (c.dashTimer > 0) c.dashTimer = Math.max(0, c.dashTimer - dt);
+      if (c.dashCooldown > 0) c.dashCooldown = Math.max(0, c.dashCooldown - dt);
+      var mx = 0, my = 0;
+      if (c.isPlayer) {
+        var kx = 0, ky = 0;
+        if (input.keys['KeyW'] || input.keys['ArrowUp']) ky--;
+        if (input.keys['KeyS'] || input.keys['ArrowDown']) ky++;
+        if (input.keys['KeyA'] || input.keys['ArrowLeft']) kx--;
+        if (input.keys['KeyD'] || input.keys['ArrowRight']) kx++;
+        if (kx || ky) { var ln = Math.hypot(kx, ky); mx = kx / ln; my = ky / ln; setKnobVisual(mx, my); }
+        else if (input.active) { mx = input.vx; my = input.vy; }
+      } else {
+        c.aiTimer -= dt;
+        if (c.aiTimer <= 0) {
+          c.aiTimer = 0.35 + Math.random() * 0.45;
+          var th = null, pr = null, mtd = 320, mpd = 360;
+          for (var j = 0; j < clouds.length; j++) {
+            if (i === j) continue;
+            var o = clouds[j], d = Math.hypot(o.x - c.x, o.y - c.y);
+            if (o.level > c.level && d < mtd) { mtd = d; th = o; } else if (o.level < c.level && o.shield <= 0 && d < mpd) { mpd = d; pr = o; }
+          }
+          if (th) { c.aiTargetAngle = Math.atan2(c.y - th.y, c.x - th.x); if (c.dashCooldown <= 0 && mtd < 180) { c.dashTimer = 0.32; c.dashCooldown = 4.2; } }
+          else if (pr) { c.aiTargetAngle = Math.atan2(pr.y - c.y, pr.x - c.x); if (c.dashCooldown <= 0 && mpd < 190 && Math.random() < 0.5) { c.dashTimer = 0.3; c.dashCooldown = 4.5; } }
+          else {
+            var bf = null, bs = -1;
+            for (var f = 0; f < foods.length; f += 3) { var fd = foods[f], df = Math.hypot(fd.x - c.x, fd.y - c.y); if (df < 420 && fd.xp / (df + 40) > bs) { bs = fd.xp / (df + 40); bf = fd; } }
+            c.aiTargetAngle = bf ? Math.atan2(bf.y - c.y, bf.x - c.x) : c.aiTargetAngle + (Math.random() - 0.5) * 1.4;
+          }
+          if (c.x < 220) c.aiTargetAngle = 0; else if (c.x > WORLD_SIZE - 220) c.aiTargetAngle = Math.PI;
+          if (c.y < 220) c.aiTargetAngle = Math.PI / 2; else if (c.y > WORLD_SIZE - 220) c.aiTargetAngle = -Math.PI / 2;
+        }
+        mx = Math.cos(c.aiTargetAngle); my = Math.sin(c.aiTargetAngle);
+      }
+      var spd = Math.max(150, 280 - c.level * 3.8) * (c.dashTimer > 0 ? 1.85 : 1);
+      c.vx += (mx * spd - c.vx) * Math.min(1, dt * 8); c.vy += (my * spd - c.vy) * Math.min(1, dt * 8);
+      c.x = Math.max(c.r, Math.min(WORLD_SIZE - c.r, c.x + c.vx * dt)); c.y = Math.max(c.r, Math.min(WORLD_SIZE - c.r, c.y + c.vy * dt));
+      if (Math.hypot(c.vx, c.vy) > 15) c.angle = Math.atan2(c.vy, c.vx);
+      if (emitTrail && c.isPlayer && saveData.quality !== 'low') {
+        var fx = findById(EFFECT_SKINS, c.fxId);
+        if (fx && fx.kind === 'trail') spawnBurst(c.x - Math.cos(c.angle) * c.r * 0.6, c.y - Math.sin(c.angle) * c.r * 0.6, fx.color, 1);
+      }
+      for (var fi = foods.length - 1; fi >= 0; fi--) {
+        var food = foods[fi], dx = food.x - c.x, dy = food.y - c.y, hr = c.r + food.r;
+        if (dx * dx + dy * dy < hr * hr) {
+          c.xp += food.xp; if (c.isPlayer) sound.playEat(food.type); spawnBurst(food.x, food.y, food.color, 4); foods.splice(fi, 1);
+          var nLv = getLevelData(c.xp);
+          if (nLv.lv > c.level) { c.level = nLv.lv; c.r = nLv.r; if (c.level > c.maxLevel) c.maxLevel = c.level; if (c.isPlayer) { sound.playLevelUp(); pushKillFeed(t('levelUpMsg').replace('{lv}', c.level), '#fde047'); } }
+        }
+      }
+    }
+
+    for (var ai = 0; ai < clouds.length; ai++) {
+      for (var bi = ai + 1; bi < clouds.length; bi++) {
+        var a = clouds[ai], b = clouds[bi], cdx = b.x - a.x, cdy = b.y - a.y, dist = Math.hypot(cdx, cdy), md = (a.r + b.r) * 0.78;
+        if (dist < md) {
+          if (a.shield > 0 || b.shield > 0 || a.level === b.level) {
+            var nx = cdx / (dist || 1), ny = cdy / (dist || 1), ov = (md - dist) * 0.5;
+            a.x -= nx * ov; a.y -= ny * ov; b.x += nx * ov; b.y += ny * ov; continue;
+          }
+          var win = a.level > b.level ? a : b, los = a.level > b.level ? b : a;
+          win.xp += Math.max(30, Math.floor(los.xp * 0.45) + los.level * 16); win.kills++;
+          var wLv = getLevelData(win.xp);
+          if (wLv.lv > win.level) { win.level = wLv.lv; win.r = wLv.r; if (win.level > win.maxLevel) win.maxLevel = win.level; if (win.isPlayer) sound.playLevelUp(); }
+          spawnBurst(los.x, los.y, '#fde047', 14);
+          if (win.isPlayer) sound.playCollide(true); else if (los.isPlayer) sound.playCollide(false);
+          if (win.isPlayer || los.isPlayer || Math.random() < 0.25) pushKillFeed(t('absorbedMsg').replace('{a}', win.name).replace('{b}', los.name), win.isPlayer ? '#86efac' : '#fca5a5');
+          los.xp = Math.max(0, Math.floor(los.xp * 0.35)); var rLv = getLevelData(los.xp); los.level = rLv.lv; los.r = rLv.r;
+          los.x = 240 + Math.random() * (WORLD_SIZE - 480); los.y = 240 + Math.random() * (WORLD_SIZE - 480); los.shield = 3.0;
+        }
+      }
+    }
+
+    for (var pi = particles.length - 1; pi >= 0; pi--) { var p = particles[pi]; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; if (p.life <= 0) particles.splice(pi, 1); }
+    for (var gi = 0; gi < bgClouds.length; gi++) { bgClouds[gi].x += bgClouds[gi].spd * dt * (1 + weatherPhase * 0.4); if (bgClouds[gi].x > WORLD_SIZE + 200) bgClouds[gi].x = -200; }
+    cam.zoom += (Math.max(0.45, Math.min(1.05, 1.08 - (player.level - 1) * 0.022)) - cam.zoom) * Math.min(1, dt * 4);
+    cam.x += (player.x - cam.x) * Math.min(1, dt * 8); cam.y += (player.y - cam.y) * Math.min(1, dt * 8);
+    hudTick += dt; if (hudTick >= 0.14) { hudTick = 0; updateHUD(); }
+  }
+
+  function updateHUD() {
+    var m = String(Math.floor(matchTimer / 60)), s = String(Math.floor(matchTimer % 60));
+    el('hudTimer').textContent = (m.length < 2 ? '0' + m : m) + ':' + (s.length < 2 ? '0' + s : s);
+    el('hudWeather').textContent = t('w' + weatherPhase);
+    var cur = CLOUD_LEVELS[player.level - 1], nxt = CLOUD_LEVELS[player.level] || null;
+    el('hudLevelText').textContent = 'Lv.' + player.level + ' ' + (saveData.lang === 'vi' ? cur.vi : cur.en);
+    el('hudScoreText').textContent = Math.floor(player.xp) + ' XP';
+    el('hudXpFill').style.width = (nxt ? Math.min(100, Math.max(0, ((player.xp - cur.xp) / (nxt.xp - cur.xp)) * 100)) : 100) + '%';
+    el('dashBtn').classList.toggle('cooldown', player.dashCooldown > 0);
+    var sorted = clouds.slice().sort(function (a, b) { return b.xp - a.xp; }), lb = el('leaderboardList'); lb.innerHTML = '';
+    for (var i = 0; i < Math.min(5, sorted.length); i++) {
+      var c = sorted[i], row = document.createElement('div'); row.className = 'lb-row' + (c.isPlayer ? ' me' : '');
+      row.innerHTML = '<span>' + (i + 1) + '.' + c.name + '</span><span>Lv.' + c.level + '</span>'; lb.appendChild(row);
+    }
+    var mw = miniCanvas.width, mh = miniCanvas.height; miniCtx.clearRect(0, 0, mw, mh); miniCtx.fillStyle = 'rgba(15,23,42,.55)'; miniCtx.fillRect(0, 0, mw, mh);
+    for (var k = 0; k < clouds.length; k++) {
+      var mc = clouds[k]; miniCtx.beginPath(); miniCtx.arc((mc.x / WORLD_SIZE) * mw, (mc.y / WORLD_SIZE) * mh, mc.isPlayer ? 3 : (mc === sorted[0] ? 2.5 : 1.5), 0, 6.28);
+      miniCtx.fillStyle = mc.isPlayer ? '#38bdf8' : (mc === sorted[0] ? '#fbbf24' : 'rgba(255,255,255,.45)'); miniCtx.fill();
+    }
+  }
+
+  function drawCloudPuffs(cx, cy, r) {
+    ctx.beginPath(); ctx.arc(cx, cy, r * 0.72, 0, 6.28);
+    ctx.moveTo(cx - r * 0.52 + r * 0.54, cy + r * 0.14); ctx.arc(cx - r * 0.52, cy + r * 0.14, r * 0.54, 0, 6.28);
+    ctx.moveTo(cx + r * 0.52 + r * 0.54, cy + r * 0.14); ctx.arc(cx + r * 0.52, cy + r * 0.14, r * 0.54, 0, 6.28);
+    ctx.moveTo(cx - r * 0.24 + r * 0.52, cy - r * 0.36); ctx.arc(cx - r * 0.24, cy - r * 0.36, r * 0.52, 0, 6.28);
+    ctx.moveTo(cx + r * 0.26 + r * 0.48, cy - r * 0.32); ctx.arc(cx + r * 0.26, cy - r * 0.32, r * 0.48, 0, 6.28); ctx.fill();
+  }
+  function drawCloudShape(cx, cy, r, c1, c2, outline, level) {
+    if (outline) { ctx.fillStyle = outline; drawCloudPuffs(cx, cy, r + Math.max(2, r * 0.06)); }
+    var g = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.3, r * 0.15, cx, cy, r * 1.15); g.addColorStop(0, c1); g.addColorStop(1, c2);
+    ctx.fillStyle = g; drawCloudPuffs(cx, cy, r);
+    if (level >= 18) {
+      ctx.fillStyle = c1; var sp = level >= 25 ? 8 : 4;
+      for (var s = 0; s < sp; s++) { var sa = (s / sp) * 6.28; ctx.beginPath(); ctx.arc(cx + Math.cos(sa) * r * 0.92, cy + Math.sin(sa) * r * 0.92, r * 0.16, 0, 6.28); ctx.fill(); }
+    }
+  }
+  function drawCloudAura(c, nowSec) {
+    var r = c.r, lv = c.level, fx = findById(EFFECT_SKINS, c.fxId) || EFFECT_SKINS[0];
+    if (fx.kind === 'ring' || fx.kind === 'rainbow') {
+      ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(nowSec * 1.8);
+      ctx.strokeStyle = fx.kind === 'rainbow' ? 'hsl(' + ((nowSec * 120) % 360) + ',90%,65%)' : fx.color; ctx.lineWidth = 2.6;
+      if (ctx.setLineDash) ctx.setLineDash([r * 0.35, r * 0.2]);
+      ctx.beginPath(); ctx.arc(0, 0, r * 1.32, 0, 6.28); ctx.stroke(); ctx.restore();
+    } else if (fx.kind === 'orbit') {
+      ctx.fillStyle = fx.color;
+      for (var oi = 0; oi < 3; oi++) { var oa = nowSec * 2.8 + oi * 2.1; ctx.beginPath(); ctx.arc(c.x + Math.cos(oa) * r * 1.28, c.y + Math.sin(oa) * r * 1.28, Math.max(3, r * 0.08), 0, 6.28); ctx.fill(); }
+    } else if (fx.kind === 'sparks') {
+      ctx.strokeStyle = fx.color; ctx.lineWidth = 2; var sa = nowSec * 5;
+      ctx.beginPath(); ctx.moveTo(c.x + Math.cos(sa) * r, c.y + Math.sin(sa) * r); ctx.lineTo(c.x + Math.cos(sa + 0.3) * r * 1.35, c.y + Math.sin(sa + 0.3) * r * 1.35); ctx.stroke();
+    }
+    if (lv >= 3 && lv <= 9) { ctx.strokeStyle = 'rgba(186,230,253,.42)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(c.x, c.y, r * 1.22, nowSec * 2, nowSec * 2 + 2.7); ctx.stroke(); }
+    if (lv >= 6 && saveData.quality !== 'low') {
+      ctx.strokeStyle = 'rgba(96,165,250,.5)'; ctx.lineWidth = 1.5; var dr = lv >= 14 ? 5 : 3;
+      for (var k = 0; k < dr; k++) { var ox = (k - (dr - 1) / 2) * r * 0.42, oy = (nowSec * 95 + k * 24) % (r * 0.85); ctx.beginPath(); ctx.moveTo(c.x + ox, c.y + r * 0.4 + oy); ctx.lineTo(c.x + ox - 3, c.y + r * 0.4 + oy + 10); ctx.stroke(); }
+    }
+    if (lv >= 10) {
+      var bl = lv >= 22 ? 5 : (lv >= 16 ? 3 : 2); ctx.strokeStyle = lv >= 26 ? '#e879f9' : (lv >= 19 ? '#fb7185' : '#fde047'); ctx.lineWidth = 2.2;
+      for (var b = 0; b < bl; b++) {
+        var ang = nowSec * (3 + b) + b * 1.7, x1 = c.x + Math.cos(ang) * r * 0.96, y1 = c.y + Math.sin(ang) * r * 0.96, x2 = c.x + Math.cos(ang + 0.32) * r * 1.4, y2 = c.y + Math.sin(ang + 0.32) * r * 1.4;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo((x1 + x2) / 2 + (Math.random() - 0.5) * 11, (y1 + y2) / 2 + (Math.random() - 0.5) * 11); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+    }
+    if (lv >= 15) {
+      ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(-nowSec * 2.5);
+      ctx.strokeStyle = lv >= 25 ? 'rgba(253,224,71,.65)' : 'rgba(45,212,191,.5)'; ctx.lineWidth = 3;
+      if (ctx.setLineDash) ctx.setLineDash([r * 0.38, r * 0.24]);
+      ctx.beginPath(); ctx.arc(0, 0, r * 1.44, 0, 6.28); ctx.stroke(); ctx.restore();
+    }
+    if (lv >= 28) { ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.arc(c.x, c.y, r * 1.62, 0, 6.28); ctx.stroke(); }
+  }
+
+  function render(nowMs) {
+    var nowSec = nowMs * 0.001; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var sky = findById(SKY_SKINS, saveData.equippedSky) || SKY_SKINS[0], pc = sky.phases[weatherPhase];
+    var sg = ctx.createLinearGradient(0, 0, 0, viewH); sg.addColorStop(0, pc[0]); sg.addColorStop(1, pc[1]); ctx.fillStyle = sg; ctx.fillRect(0, 0, viewW, viewH);
+    ctx.save(); ctx.translate(viewW / 2, viewH / 2); ctx.scale(cam.zoom, cam.zoom); ctx.translate(-cam.x, -cam.y);
+    var hw = (viewW / 2) / cam.zoom + 170, hh = (viewH / 2) / cam.zoom + 170, minX = cam.x - hw, maxX = cam.x + hw, minY = cam.y - hh, maxY = cam.y + hh;
+
+    ctx.fillStyle = weatherPhase >= 3 ? 'rgba(15,23,42,.25)' : 'rgba(255,255,255,.16)';
+    for (var i = 0; i < bgClouds.length; i++) {
+      var bc = bgClouds[i]; if (bc.x < minX - 200 || bc.x > maxX + 200 || bc.y < minY - 200 || bc.y > maxY + 200) continue;
+      ctx.beginPath(); ctx.arc(bc.x, bc.y, bc.s, 0, 6.28); ctx.arc(bc.x + bc.s * 0.65, bc.y + 10, bc.s * 0.72, 0, 6.28); ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 2; var gs = 240, gx0 = Math.max(0, Math.floor(minX / gs) * gs), gx1 = Math.min(WORLD_SIZE, Math.ceil(maxX / gs) * gs), gy0 = Math.max(0, Math.floor(minY / gs) * gs), gy1 = Math.min(WORLD_SIZE, Math.ceil(maxY / gs) * gs);
+    ctx.beginPath(); for (var x = gx0; x <= gx1; x += gs) { ctx.moveTo(x, gy0); ctx.lineTo(x, gy1); } for (var y = gy0; y <= gy1; y += gs) { ctx.moveTo(gx0, y); ctx.lineTo(gx1, y); } ctx.stroke();
+    ctx.strokeStyle = 'rgba(248,113,113,.75)'; ctx.lineWidth = 8; ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
+
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (var fi = 0; fi < foods.length; fi++) {
+      var f = foods[fi]; if (f.x < minX || f.x > maxX || f.y < minY || f.y > maxY) continue;
+      ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1 + Math.sin(nowSec * 4 + f.phase) * 0.12), 0, 6.28); ctx.fillStyle = f.color + '44'; ctx.fill();
+      if (saveData.quality !== 'low') { ctx.font = Math.floor(f.r * 1.45) + 'px sans-serif'; ctx.fillText(f.icon, f.x, f.y + 1); }
+      else { ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 0.65, 0, 6.28); ctx.fillStyle = f.color; ctx.fill(); }
+    }
+    for (var pi = 0; pi < particles.length; pi++) { var p = particles[pi]; if (p.x < minX || p.x > maxX || p.y < minY || p.y > maxY) continue; ctx.globalAlpha = Math.max(0, p.life / p.maxLife); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.28); ctx.fill(); }
+    ctx.globalAlpha = 1;
+
+    var vis = clouds.filter(function (c) { return c.x >= minX - 180 && c.x <= maxX + 180 && c.y >= minY - 180 && c.y <= maxY + 180; }).sort(function (a, b) { return a.level - b.level; });
+    for (var ci = 0; ci < vis.length; ci++) {
+      var c = vis[ci], lv = CLOUD_LEVELS[c.level - 1], sk = findById(CLOUD_SKINS, c.skinId) || CLOUD_SKINS[0];
+      drawCloudAura(c, nowSec);
+      var c1 = sk.tint ? sk.tint[0] : lv.c1, c2 = sk.tint ? sk.tint[1] : lv.c2;
+      if (sk.pattern === 'rainbow') { c1 = 'hsl(' + ((nowSec * 90) % 360) + ',90%,80%)'; c2 = 'hsl(' + (((nowSec * 90) + 120) % 360) + ',80%,55%)'; }
+      if (c.shield > 0 && Math.floor(nowSec * 10) % 2 === 0) ctx.globalAlpha = 0.55;
+      drawCloudShape(c.x, c.y, c.r, c1, c2, sk.outline, c.level); ctx.globalAlpha = 1;
+      if (c.shield > 0) { ctx.strokeStyle = 'rgba(56,189,248,.78)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(c.x, c.y, c.r * 1.32, 0, 6.28); ctx.stroke(); }
+      drawCloudFace(ctx, c.x, c.y, c.r, c.angle, c.faceType, c.level >= 20);
+      ctx.font = '700 ' + Math.max(12, Math.min(18, Math.floor(c.r * 0.32))) + 'px sans-serif';
+      ctx.fillStyle = 'rgba(15,23,42,.8)'; ctx.fillText(c.name + ' [Lv.' + c.level + ']', c.x + 1, c.y - c.r - 13);
+      ctx.fillStyle = c.isPlayer ? '#fde047' : '#fff'; ctx.fillText(c.name + ' [Lv.' + c.level + ']', c.x, c.y - c.r - 14);
+    }
+    ctx.restore();
+
+    if (weatherPhase >= 2 && saveData.quality !== 'low') {
+      ctx.strokeStyle = 'rgba(186,230,253,.24)'; ctx.lineWidth = 1.4; ctx.beginPath();
+      for (var r = 0; r < weatherPhase * 18; r++) { var rx = ((r * 173 + nowSec * 420) % (viewW + 100)) - 50, ry = ((r * 251 + nowSec * 980) % (viewH + 100)) - 50; ctx.moveTo(rx, ry); ctx.lineTo(rx - 10, ry + 26); }
+      ctx.stroke();
+    }
+    if (lightningFlash > 0) { ctx.fillStyle = 'rgba(255,255,255,' + (lightningFlash * 0.45) + ')'; ctx.fillRect(0, 0, viewW, viewH); }
+  }
+
+  function gameLoop(now) {
+    if (!running) return;
+    var dt = Math.min(0.05, Math.max(0.001, (now - lastTime) / 1000)); lastTime = now;
+    update(dt); if (running) { render(now); animId = requestAnimationFrame(gameLoop); }
+  }
+
+  el('playerNameInput').value = saveData.name; el('selLanguage').value = saveData.lang;
+  el('rangeSfx').value = saveData.sfxVol; el('rangeBgm').value = saveData.bgmVol; el('selQuality').value = saveData.quality;
+  el('modeOfflineBtn').onclick = function () { gameMode = 'offline'; el('modeOfflineBtn').classList.add('active'); el('modeOnlineBtn').classList.remove('active'); applyLocalization(); };
+  el('modeOnlineBtn').onclick = function () { gameMode = 'online'; el('modeOnlineBtn').classList.add('active'); el('modeOfflineBtn').classList.remove('active'); applyLocalization(); };
+  el('btnPlay').onclick = startMatch; el('btnPlayAgain').onclick = startMatch;
+  el('btnLeaveMatch').onclick = function () { endMatch(true); };
+  el('btnBackLobby').onclick = function () { el('resultModal').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); renderLobbyBackdrop(); };
+  el('btnOpenShop').onclick = function () { renderShop(); el('shopModal').classList.remove('hidden'); };
+  el('btnCloseShop').onclick = function () { el('shopModal').classList.add('hidden'); };
+  function selectShopTab(tab, id) { shopTab = tab; ['tabCloudSkins','tabSkySkins','tabEffectSkins','tabFaceSkins'].forEach(function (x) { el(x).classList.toggle('active', x === id); }); renderShop(); }
+  el('tabCloudSkins').onclick = function () { selectShopTab('cloud', 'tabCloudSkins'); };
+  el('tabSkySkins').onclick = function () { selectShopTab('sky', 'tabSkySkins'); };
+  el('tabEffectSkins').onclick = function () { selectShopTab('effect', 'tabEffectSkins'); };
+  el('tabFaceSkins').onclick = function () { selectShopTab('face', 'tabFaceSkins'); };
+  el('btnOpenLevels').onclick = function () { renderLevelsDex(); el('levelsModal').classList.remove('hidden'); };
+  el('btnCloseLevels').onclick = function () { el('levelsModal').classList.add('hidden'); };
+  el('btnOpenSettings').onclick = function () { el('settingsModal').classList.remove('hidden'); };
+  el('btnCloseSettings').onclick = function () { el('settingsModal').classList.add('hidden'); };
+  el('selLanguage').onchange = function (e) { saveData.lang = e.target.value; persistSave(); applyLocalization(); };
+  el('rangeSfx').oninput = function (e) { saveData.sfxVol = Number(e.target.value); persistSave(); };
+  el('rangeBgm').oninput = function (e) { saveData.bgmVol = Number(e.target.value); persistSave(); };
+  el('selQuality').onchange = function (e) { saveData.quality = e.target.value; persistSave(); resizeCanvas(); };
+
+  function renderLobbyBackdrop() {
+    if (running) return;
+    resizeCanvas();
+    var sky = findById(SKY_SKINS, saveData.equippedSky) || SKY_SKINS[0];
+    var g = ctx.createLinearGradient(0, 0, 0, viewH); g.addColorStop(0, sky.phases[0][0]); g.addColorStop(1, sky.phases[0][1]);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = g; ctx.fillRect(0, 0, viewW, viewH);
+  }
+  applyLocalization(); renderLobbyBackdrop();
+})();
+</script>
+</body>
+</html>
